@@ -1,0 +1,39 @@
+# Secretos y entorno
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node
+node_modules/
+dist/
+build/
+.svelte-kit/
+.next/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Medios y datos locales (videos, audio y transcripciones de prueba)
+data/
+media/
+*.mp4
+*.mp3
+*.wav
+*.webm
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code local
+CLAUDE.local.md
+.claude/settings.local.json
