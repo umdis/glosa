@@ -105,6 +105,19 @@ Cada cita se normaliza (minúsculas, sin tildes ni puntuación) y se busca en el
 - WCAG 2.2 AA: reproductor y resultados manejables con teclado, foco visible, contraste suficiente.
 - La transcripción sincronizada es en sí misma una mejora de accesibilidad.
 
+### D12. Dirección visual: «el manuscrito vivo» (aprobada el 2026-10-27)
+El propietario pidió (2026-10-27) una estética moderna y nada convencional, ligada al nombre y al propósito. Una *glosa* es la nota que los copistas escribían en el margen o entre líneas para explicar el texto. La *Glossa Ordinaria* era la gran glosa medieval de la Biblia. La interfaz toma de ahí su gramática, **sin imitar pergamino ni letra gótica**:
+- **Página con márgenes vivos.** La transcripción es la columna central de texto. Las respuestas, las citas y los pasajes viven en el margen como glosas, unidas por un trazo fino a la frase que comentan. El video ocupa el lugar de la miniatura iluminada, arriba de la página.
+- **Rubricación.** Los copistas usaban tinta roja para las rúbricas y las referencias. En Glosa, **el rojo se reserva solo para los momentos verificados** (minutos y referencias en los que se puede hacer clic).
+  - Es el único color de acento.
+  - Nunca es la única señal: siempre va acompañado de texto o de un icono.
+- **Los minutos como folios.** Las marcas de tiempo se componen como numeración de folio («¶ 06:23»), con tipografía monoespaciada.
+- **Búsqueda como concordancia.** Los resultados se alinean al estilo de las concordancias bíblicas (palabra clave en contexto, centrada en su columna). Es distinto y además funcional para leer de un vistazo.
+- **Tipografía.** Una serif contemporánea con raíz caligráfica para el texto, una grotesca para la interfaz y una monoespaciada para los folios. Fuentes alojadas en la propia app (`@fontsource`), sin CDN de terceros.
+- **Color.** Fondo «vitela» liso (sin textura), tinta casi negra y rojo de rúbrica con contraste AA. Modo oscuro «tinta de noche».
+- **Movimiento mínimo y con sentido.** Al verificarse una cita aparece un pequeño sello, y el trazo de la glosa se dibuja hacia su frase. Se respeta `prefers-reduced-motion`.
+- Antes de implementar la interfaz (tarea 3.4) se invocan las skills `frontend-design` y `jesus-dev:jesus-accessibility`.
+
 ### Registro de decisión (largo plazo)
 - **Decisión tomada:** SQLite + FTS5 en un solo contenedor, búsqueda léxica sin embeddings y un único proveedor (Meta).
 - **Por qué ahora:** 8 días, una sola persona, una demo que tiene que aguantar en vivo.

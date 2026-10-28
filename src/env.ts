@@ -15,6 +15,14 @@ export const variables = defineEnvVars({
 		schema: opcional,
 		description: 'Clave de administrador para subir, revisar y borrar contenido.'
 	},
+	FFMPEG_PATH: {
+		schema: (valor) => valor || 'ffmpeg',
+		description: 'Ruta de ffmpeg (por defecto, el del PATH).'
+	},
+	FFPROBE_PATH: {
+		schema: (valor) => valor || 'ffprobe',
+		description: 'Ruta de ffprobe (por defecto, el del PATH).'
+	},
 	DAILY_SPEND_CAP_USD: {
 		schema: topeGastoDiario,
 		description: 'Tope de gasto diario de la demo, en dólares (5 por defecto).'

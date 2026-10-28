@@ -9,12 +9,12 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 2. Ingesta y transcripción (28–29-oct)
 
-- [ ] 2.1 ★ Subida de video con clave de administrador; validación con ffprobe; registro con estado `procesando`
-- [ ] 2.2 ★ Normalización con ffmpeg: H.264 480p para reproducir y WAV mono de 24 kHz para transcribir
-- [ ] 2.3 ★ Corte en ventanas de 30 s con 5 s de solape y transcripción en paralelo (8 simultáneas) con `languageBias` y palabras clave
-- [ ] 2.4 ★ Fusión del solape (alineación de palabras) y partición en fragmentos de 20 s o menos, con inicio y fin absolutos
-- [ ] 2.5 ★ Pruebas de la fusión con las ventanas medidas: sin palabras duplicadas ni perdidas en los bordes; Santiago 1:2 cae en ≈ 06:23
-- [ ] 2.6 ★ Estado por paso (`procesando` / `listo` / `con errores`), conservación de lo ya hecho y reintento del paso fallido
+- [x] 2.1 ★ Subida de video con clave de administrador; validación con ffprobe; registro con estado `procesando`
+- [x] 2.2 ★ Normalización con ffmpeg: H.264 480p para reproducir y WAV mono de 24 kHz para transcribir
+- [x] 2.3 ★ Corte en ventanas de 30 s con 5 s de solape y transcripción en paralelo (8 simultáneas) con `languageBias` y palabras clave
+- [x] 2.4 ★ Fusión del solape (alineación de palabras) y partición en fragmentos de 20 s o menos, con inicio y fin absolutos
+- [x] 2.5 ★ Pruebas de la fusión con las ventanas medidas: sin palabras duplicadas ni perdidas en los bordes; Santiago 1:2 cae en ≈ 06:23
+- [x] 2.6 ★ Estado por paso (`procesando` / `listo` / `con errores`), conservación de lo ya hecho y reintento del paso fallido
 
 ## 3. Búsqueda por lo dicho (29-oct)
 
