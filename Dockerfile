@@ -21,14 +21,16 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 # BODY_SIZE_LIMIT: los videos se suben enteros y el límite por defecto del adapter es 512 KB.
-# PROTOCOL_HEADER / HOST_HEADER: detrás de Traefik, el protocolo y el host reales llegan en las
-# cabeceras reenviadas.
+# PROTOCOL_HEADER / HOST_HEADER / ADDRESS_HEADER: detrás de Traefik, el protocolo, el host y la
+# IP reales llegan en las cabeceras reenviadas (la IP la usa el límite de preguntas por visitante).
 ENV NODE_ENV=production \
 	PORT=3000 \
 	DATA_DIR=/data \
 	BODY_SIZE_LIMIT=2G \
 	PROTOCOL_HEADER=x-forwarded-proto \
-	HOST_HEADER=x-forwarded-host
+	HOST_HEADER=x-forwarded-host \
+	ADDRESS_HEADER=x-forwarded-for \
+	XFF_DEPTH=1
 COPY --from=build /app/build ./build
 COPY --from=build /app/node_modules ./node_modules
 COPY package.json ./

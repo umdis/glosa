@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import Estudio from '#lib/componentes/Estudio.svelte';
 	import { folio } from '#lib/formato.js';
 	import type { PageProps } from './$types';
 
@@ -61,6 +63,12 @@
 	{#if resultado && !pensando}
 		<section class="respuesta" aria-labelledby="titulo-respuesta">
 			<h2 id="titulo-respuesta">{resultado.pregunta}</h2>
+			{#if form && 'desdeGuardada' in form && form.desdeGuardada}
+				<p class="guardada">
+					The AI service is not available right now, so this is the answer Glosa saved the last time
+					someone asked this question. Its quotes were verified then.
+				</p>
+			{/if}
 
 			{#if resultado.sinEvidencia}
 				<p class="vacio">
@@ -106,6 +114,10 @@
 				<p class="busquedas">
 					Searched the transcripts for {resultado.busquedas.map((b) => `“${b}”`).join(', ')}.
 				</p>
+			{/if}
+
+			{#if resultado.afirmaciones.some((a) => a.respaldo === 'respaldada')}
+				<Estudio respuesta={resultado} origen={page.url.origin} />
 			{/if}
 		</section>
 	{/if}
@@ -252,9 +264,17 @@
 	}
 
 	.busquedas,
-	.vacio {
+	.vacio,
+	.guardada {
 		color: var(--suave);
 		max-width: var(--medida);
+	}
+
+	.guardada {
+		font-family: var(--letra-interfaz);
+		border-left: 2px solid var(--suave);
+		padding-left: 0.75rem;
+		margin: -1rem 0 1.5rem;
 	}
 
 	.busquedas {

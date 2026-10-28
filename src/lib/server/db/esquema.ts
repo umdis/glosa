@@ -186,5 +186,13 @@ export const migraciones: Migracion[] = [
 			INSERT INTO fragmentos_trigramas (rowid, texto_norma) VALUES (new.id, new.texto_norma);
 		END;
 		`);
-	}
+	},
+
+	/* 3 — última respuesta verificada de cada pregunta, como respaldo si la API no responde. */ `
+	CREATE TABLE respuestas_guardadas (
+		pregunta_norma TEXT PRIMARY KEY,
+		resultado TEXT NOT NULL,
+		guardada_en TEXT NOT NULL DEFAULT (datetime('now'))
+	);
+	`
 ];

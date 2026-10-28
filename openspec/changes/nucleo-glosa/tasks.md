@@ -63,15 +63,15 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 9. Acceso de demo (2-nov)
 
-- [ ] 9.1 ★ Vista pública de solo lectura; controles de administrador solo con `ADMIN_TOKEN`
-- [ ] 9.2 ★ Límite de preguntas por IP y tope diario de gasto con mensaje claro; la búsqueda sigue funcionando
-- [ ] 9.3 Caché de las respuestas ensayadas como respaldo ante caídas de la API, marcadas como tales
+- [x] 9.1 ★ Vista pública de solo lectura; controles de administrador solo con `ADMIN_TOKEN`
+- [x] 9.2 ★ Límite de preguntas por IP y tope diario de gasto con mensaje claro; la búsqueda sigue funcionando
+- [x] 9.3 Caché de las respuestas ensayadas como respaldo ante caídas de la API, marcadas como tales
 
 ## 10. Estudio citado (2-nov)
 
-- [ ] 10.1 Borrador de estudio a partir de una respuesta (solo afirmaciones verificadas)
-- [ ] 10.2 Edición del texto y exportación a Markdown con citas enlazadas al momento
-- [ ] 10.3 Vista imprimible para guardar como PDF
+- [x] 10.1 Borrador de estudio a partir de una respuesta (solo afirmaciones verificadas)
+- [x] 10.2 Edición del texto y exportación a Markdown con citas enlazadas al momento
+- [x] 10.3 Vista imprimible para guardar como PDF
 
 ## 11. Despliegue y entrega (2–3-nov)
 
