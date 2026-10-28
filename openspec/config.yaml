@@ -24,7 +24,7 @@ context: |
 # Per-artifact rules (optional)
 rules:
   proposal:
-    - Incluir siempre "No objetivos": el plazo es de días, el alcance se recorta sin piedad.
-    - Indicar qué criterio de la rúbrica mueve cada capacidad propuesta.
+    - "Incluir siempre la sección de no objetivos, porque el plazo es de días y el alcance se recorta sin piedad."
+    - "Indicar qué criterio de la rúbrica mueve cada capacidad propuesta."
   tasks:
-    - Tareas de máximo ~2 horas; marcar cuáles son imprescindibles para la demo.
+    - "Tareas de máximo ~2 horas; marcar cuáles son imprescindibles para la demo."
