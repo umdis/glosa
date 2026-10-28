@@ -23,7 +23,7 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 - [x] 3.3 ★ Endpoint de búsqueda: primero por raíces (`bm25`), luego trigramas sin duplicar; fragmento, video, minuto y contexto con resaltado sobre el texto original; solo contenido visible (aprobado)
 - [x] 3.4 ★ Página de video: reproductor y transcripción sincronizada que resalta el fragmento actual
 - [x] 3.5 ★ Página de búsqueda con resultados que abren el video en el minuto exacto
-- [ ] 3.6 Navegación completa con teclado, foco visible y comprobación de contraste (WCAG 2.2 AA)
+- [x] 3.6 Navegación completa con teclado, foco visible y comprobación de contraste (WCAG 2.2 AA)
 
 ## 4. Verificación de citas (30-oct)
 
