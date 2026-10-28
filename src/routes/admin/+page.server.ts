@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { timingSafeEqual, createHash } from 'node:crypto';
 import { ADMIN_TOKEN } from '$app/env/private';
 import { COOKIE_ADMIN, esAdmin, valorSesion } from '#lib/server/acceso.js';
+import { segundoPoster } from '#lib/server/fotogramas.js';
 import { decidir, listarPendientes, type Decision } from '#lib/server/revision/decisiones.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -33,7 +34,11 @@ export const load: PageServerLoad = ({ request, cookies }) => {
 		.get() as { gastoHoy: number };
 	return {
 		autenticado: true as const,
-		videos: videos.map((v) => ({ ...v, pasos: pasos.filter((p) => p.videoId === v.id) })),
+		videos: videos.map((v) => ({
+			...v,
+			posterSegundo: segundoPoster(v.duracionMs),
+			pasos: pasos.filter((p) => p.videoId === v.id)
+		})),
 		pendientes: listarPendientes(db),
 		gastoHoy,
 		topeAlcanzado: topeAlcanzado()
