@@ -5,8 +5,8 @@ import { obtenerServicios } from '#lib/server/servicios.js';
 import type { RequestHandler } from './$types';
 
 /** Estado del procesamiento de un video, paso por paso (solo administrador). */
-export const GET: RequestHandler = ({ request, params }) => {
-	exigirAdmin(request, ADMIN_TOKEN);
+export const GET: RequestHandler = ({ request, params, cookies }) => {
+	exigirAdmin(request, ADMIN_TOKEN, cookies);
 	const { db } = obtenerServicios();
 	const video = db
 		.prepare(`SELECT id, titulo, estado, duracion_ms AS duracionMs FROM videos WHERE id = ?`)

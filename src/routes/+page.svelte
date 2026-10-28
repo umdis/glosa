@@ -25,6 +25,10 @@
 			<button type="submit">Search</button>
 		</div>
 	</form>
+	<p class="preguntar">
+		Or <a href={resolve('/ask')}>ask the collection a question</a> and get an answer built from verified
+		quotes.
+	</p>
 
 	<section class="indice" aria-labelledby="titulo-indice">
 		<h2 id="titulo-indice">The collection</h2>
@@ -80,6 +84,16 @@
 		flex: 1;
 		min-width: 0;
 		font-size: var(--t-2);
+	}
+
+	.preguntar {
+		font-family: var(--letra-interfaz);
+		color: var(--suave);
+		margin: 1rem 0 0;
+	}
+
+	.preguntar a {
+		color: var(--tinta);
 	}
 
 	.indice {

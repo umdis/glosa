@@ -63,6 +63,44 @@ export class ErrorMeta extends Error {
 	}
 }
 
+/** Mensajes de Chat Completions (formato compatible con OpenAI). */
+export type MensajeChat =
+	| { role: 'system' | 'user'; content: string }
+	| { role: 'assistant'; content: string | null; tool_calls?: LlamadaHerramienta[] }
+	| { role: 'tool'; tool_call_id: string; content: string };
+
+export interface LlamadaHerramienta {
+	id: string;
+	type: 'function';
+	function: { name: string; arguments: string };
+}
+
+export interface DefinicionHerramienta {
+	type: 'function';
+	function: { name: string; description: string; parameters: Record<string, unknown> };
+}
+
+export interface CuerpoChat {
+	model: string;
+	messages: MensajeChat[];
+	tools?: DefinicionHerramienta[];
+	response_format?: Record<string, unknown>;
+	max_completion_tokens?: number;
+	[otros: string]: unknown;
+}
+
+export interface RespuestaChat {
+	choices: Array<{
+		finish_reason: string;
+		message: { role: 'assistant'; content: string | null; tool_calls?: LlamadaHerramienta[] };
+	}>;
+	usage?: {
+		prompt_tokens?: number;
+		completion_tokens?: number;
+		prompt_tokens_details?: { cached_tokens?: number };
+	};
+}
+
 interface UsoResponses {
 	input_tokens?: number;
 	input_tokens_details?: { cached_tokens?: number };
@@ -104,6 +142,34 @@ export class ClienteMeta {
 		const entrada = uso.input_tokens ?? 0;
 		const cache = uso.input_tokens_details?.cached_tokens ?? 0;
 		const salida = uso.output_tokens ?? 0;
+		this.registroGasto.registrar({
+			modelo: cuerpo.model,
+			operacion,
+			tokensEntrada: entrada,
+			tokensCache: cache,
+			tokensSalida: salida,
+			segundosAudio: 0,
+			costoUsd: costoTokens(cuerpo.model, entrada, cache, salida)
+		});
+		return datos;
+	}
+
+	/**
+	 * Llama a Chat Completions (el endpoint donde la API de Meta admite herramientas) y registra
+	 * el uso de tokens.
+	 */
+	async chat(cuerpo: CuerpoChat, operacion = 'chat'): Promise<RespuestaChat> {
+		exigirTierStandard(cuerpo.model);
+		const respuesta = await this.solicitar(operacion, '/chat/completions', () => ({
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(cuerpo)
+		}));
+		const datos = (await respuesta.json()) as RespuestaChat;
+		const uso = datos.usage ?? {};
+		const entrada = uso.prompt_tokens ?? 0;
+		const cache = uso.prompt_tokens_details?.cached_tokens ?? 0;
+		const salida = uso.completion_tokens ?? 0;
 		this.registroGasto.registrar({
 			modelo: cuerpo.model,
 			operacion,

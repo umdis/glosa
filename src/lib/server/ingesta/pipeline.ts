@@ -5,6 +5,13 @@ import type { Base } from '../db/base';
 import { extraerAudio, normalizarVideo, probar, type RutasFfmpeg } from '../medios/ffmpeg';
 import { cortarEnVentanas } from '../medios/wav';
 import type { ClienteMeta } from '../meta/cliente';
+import { guardarFicha, proponerFicha } from '../revision/resumen';
+import {
+	aplicarClasificacion,
+	clasificarSensibles,
+	fragmentosPorClasificar,
+	type Marcado
+} from '../revision/sensibles';
 import { normalizar } from '../texto/normalizar';
 import { textoARaices } from '../texto/raices';
 import { fragmentar, fusionarVentanas } from './fusion';
@@ -12,7 +19,7 @@ import { transcribirVentanas } from './transcripcion';
 
 export interface DependenciasIngesta {
 	db: Base;
-	meta: Pick<ClienteMeta, 'transcribir'>;
+	meta: Pick<ClienteMeta, 'transcribir' | 'chat'>;
 	rutas: RutasFfmpeg;
 	/** Carpeta raíz de los medios; cada video vive en `<carpetaMedios>/<id>/`. */
 	carpetaMedios: string;
@@ -61,23 +68,65 @@ const pasoTranscribir: Paso = {
 			palabrasClave: [...NOMBRES_LIBROS]
 		});
 		const fragmentos = fragmentar(fusionarVentanas(transcritas));
-		guardarFragmentos(db, videoId, fragmentos);
+		// Nacen ocultos: solo se publican después de la clasificación de segmentos sensibles.
+		guardarFragmentos(db, videoId, fragmentos, 'pendiente');
 	}
 };
 
-/** Pasos en orden. Las secciones siguientes (pantalla, sensibles, pasajes) se agregan aquí. */
-export const PASOS: Paso[] = [pasoNormalizar, pasoTranscribir];
+/** Tope de fragmentos por llamada de clasificación (unas 3 h de habla caben de sobra). */
+const LOTE_CLASIFICACION = 300;
+
+const pasoSensibles: Paso = {
+	nombre: 'sensibles',
+	requiere: ['transcribir'],
+	async ejecutar({ db, meta, videoId }) {
+		const fragmentos = fragmentosPorClasificar(db, videoId);
+		const marcados: Marcado[] = [];
+		for (let i = 0; i < fragmentos.length; i += LOTE_CLASIFICACION) {
+			marcados.push(
+				...(await clasificarSensibles(meta, fragmentos.slice(i, i + LOTE_CLASIFICACION)))
+			);
+		}
+		aplicarClasificacion(db, videoId, fragmentos, marcados);
+	}
+};
+
+const pasoFicha: Paso = {
+	nombre: 'ficha',
+	requiere: ['sensibles'],
+	async ejecutar({ db, meta, videoId }) {
+		const { titulo } = db.prepare(`SELECT titulo FROM videos WHERE id = ?`).get(videoId) as {
+			titulo: string;
+		};
+		const texto = (
+			db
+				.prepare(
+					`SELECT texto FROM fragmentos WHERE video_id = ? AND visibilidad = 'visible' ORDER BY orden`
+				)
+				.all(videoId) as Array<{ texto: string }>
+		)
+			.map((f) => f.texto)
+			.join(' ');
+		if (!texto) return;
+		guardarFicha(db, videoId, await proponerFicha(meta, titulo, texto));
+	}
+};
+
+/** Pasos en orden. Las secciones siguientes (pantalla, pasajes) se agregan aquí. */
+export const PASOS: Paso[] = [pasoNormalizar, pasoTranscribir, pasoSensibles, pasoFicha];
 
 /** Reemplaza los fragmentos del video; así reintentar la transcripción no duplica nada. */
 export function guardarFragmentos(
 	db: Base,
 	videoId: string,
-	fragmentos: Array<{ inicioMs: number; finMs: number; texto: string }>
+	fragmentos: Array<{ inicioMs: number; finMs: number; texto: string }>,
+	visibilidad: 'visible' | 'pendiente' = 'visible'
 ): void {
 	const borrar = db.prepare(`DELETE FROM fragmentos WHERE video_id = ?`);
 	const insertar = db.prepare(
-		`INSERT INTO fragmentos (video_id, orden, inicio_ms, fin_ms, texto, texto_raiz, texto_norma)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`
+		`INSERT INTO fragmentos
+			(video_id, orden, inicio_ms, fin_ms, texto, texto_raiz, texto_norma, visibilidad)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	);
 	db.transaction(() => {
 		borrar.run(videoId);
@@ -89,7 +138,8 @@ export function guardarFragmentos(
 				f.finMs,
 				f.texto,
 				textoARaices(f.texto),
-				normalizar(f.texto)
+				normalizar(f.texto),
+				visibilidad
 			);
 		});
 	})();

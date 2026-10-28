@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { fichaAprobada } from '#lib/server/revision/resumen.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
 import { fragmentosVisibles, obtenerVideo } from '#lib/server/videos.js';
 import type { PageServerLoad } from './$types';
@@ -11,6 +12,7 @@ export const load: PageServerLoad = ({ params, url }) => {
 	return {
 		video,
 		fragmentos: fragmentosVisibles(db, params.id),
+		ficha: fichaAprobada(db, params.id),
 		inicioSegundos: Number.isFinite(t) && t > 0 ? Math.floor(t) : 0
 	};
 };

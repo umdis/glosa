@@ -93,7 +93,11 @@ Cada cita se normaliza (minúsculas, sin tildes ni puntuación) y se busca en el
 - Spark clasifica los fragmentos por categoría: salud, fallecimientos, menores, o personas privadas con nombre.
 - Los marcados quedan **pendientes** y fuera de la búsqueda pública y de las respuestas del agente hasta que una persona los aprueba o los oculta.
 - Igual con los resúmenes y temas propuestos.
+- **Los fragmentos nacen ocultos** (`pendiente`) al transcribirse y solo se publican cuando termina la clasificación (decidido durante la implementación, 2026-10-27). Así no hay ninguna ventana en la que una petición de oración sea pública por accidente: si la clasificación falla, todo sigue oculto hasta reintentarla.
+- Si el modelo marca dos fragmentos separados por uno solo, el del medio también se protege, porque una petición de oración suele ocupar varios fragmentos seguidos.
+- Reclasificar nunca deshace una decisión humana.
 - **Nunca se usa el tier contributor**, que entrena con los datos.
+- El panel del editor (`/admin`) entra con la clave en una cookie `httpOnly` y `SameSite=Strict` que guarda un resumen de la clave, no la clave.
 
 ### D10. Seguridad y costo de la demo
 - `MODEL_API_KEY` vive solo en el servidor (variable en Dokploy).

@@ -1,5 +1,12 @@
 import { join } from 'node:path';
-import { DATA_DIR, FFMPEG_PATH, FFPROBE_PATH, MODEL_API_KEY } from '$app/env/private';
+import {
+	DAILY_SPEND_CAP_USD,
+	DATA_DIR,
+	FFMPEG_PATH,
+	FFPROBE_PATH,
+	MODEL_API_KEY
+} from '$app/env/private';
+import { gastoDelDia } from './db/gasto';
 import { abrirBase, type Base } from './db/base';
 import { registroGastoSqlite } from './db/gasto';
 import {
@@ -18,6 +25,8 @@ interface Servicios {
 	carpetaMedios: string;
 	/** Encola el procesamiento de un video; se procesan de a uno para no saturar la API. */
 	encolarProcesamiento(videoId: string): void;
+	/** Si el gasto del día ya alcanzó el tope de la demo (design.md D10). */
+	topeAlcanzado(): boolean;
 }
 
 let servicios: Servicios | undefined;
@@ -44,7 +53,9 @@ export function obtenerServicios(): Servicios {
 				.catch((error) => console.error(`Falló el procesamiento de ${videoId}`, error));
 		};
 
-		servicios = { ...deps, meta, encolarProcesamiento };
+		const topeAlcanzado = () => gastoDelDia(db) >= DAILY_SPEND_CAP_USD;
+
+		servicios = { ...deps, meta, encolarProcesamiento, topeAlcanzado };
 	}
 	return servicios;
 }

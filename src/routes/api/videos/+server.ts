@@ -17,8 +17,8 @@ import type { RequestHandler } from './$types';
  * Sube un video. El archivo va como cuerpo crudo (no multipart) para escribirlo en disco por
  * partes, sin cargarlo entero en memoria. El título va en `?titulo=`.
  */
-export const POST: RequestHandler = async ({ request, url }) => {
-	exigirAdmin(request, ADMIN_TOKEN);
+export const POST: RequestHandler = async ({ request, url, cookies }) => {
+	exigirAdmin(request, ADMIN_TOKEN, cookies);
 	const titulo = url.searchParams.get('titulo')?.trim() ?? '';
 	if (!titulo || titulo.length > 200) error(400, 'Falta el título (máx. 200 caracteres)');
 	if (!request.body) error(400, 'Falta el archivo de video');

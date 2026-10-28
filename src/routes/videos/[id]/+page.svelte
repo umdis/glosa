@@ -68,6 +68,12 @@
 	<header class="encabezado">
 		<h1>{data.video.titulo}</h1>
 		{#if data.video.duracionMs}<p class="dato">{duracion(data.video.duracionMs)}</p>{/if}
+		{#if data.ficha.resumen}<p class="resumen" lang="es">{data.ficha.resumen}</p>{/if}
+		{#if data.ficha.temas.length}
+			<ul class="temas" aria-label="Topics" lang="es">
+				{#each data.ficha.temas as tema (tema)}<li>{tema}</li>{/each}
+			</ul>
+		{/if}
 	</header>
 
 	<!-- La miniatura iluminada del manuscrito: el video, con subtítulos de la propia transcripción. -->
@@ -167,6 +173,27 @@
 	.iluminacion {
 		margin: 2rem 0 1rem;
 		max-width: 48rem;
+	}
+
+	.resumen {
+		max-width: var(--medida);
+		font-size: var(--t-1);
+		margin: 1rem 0 0.5rem;
+	}
+
+	.temas {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1rem;
+		font-family: var(--letra-interfaz);
+		color: var(--suave);
+	}
+
+	.temas li::before {
+		content: '§ ';
 	}
 
 	/*

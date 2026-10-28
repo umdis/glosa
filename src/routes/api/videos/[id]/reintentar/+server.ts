@@ -5,8 +5,8 @@ import { obtenerServicios } from '#lib/server/servicios.js';
 import type { RequestHandler } from './$types';
 
 /** Vuelve a encolar el video: solo se ejecutan los pasos que no están hechos. */
-export const POST: RequestHandler = ({ request, params }) => {
-	exigirAdmin(request, ADMIN_TOKEN);
+export const POST: RequestHandler = ({ request, params, cookies }) => {
+	exigirAdmin(request, ADMIN_TOKEN, cookies);
 	const { db, encolarProcesamiento } = obtenerServicios();
 	const video = db.prepare(`SELECT estado FROM videos WHERE id = ?`).get(params.id) as
 		{ estado: string } | undefined;

@@ -17,7 +17,12 @@ function preparar(pasos: Paso[]) {
 	const db = abrirBase(':memory:');
 	const deps: DependenciasIngesta = {
 		db,
-		meta: { transcribir: async () => ({ transcript: '', turns: [], audioDurationMs: 0 }) },
+		meta: {
+			transcribir: async () => ({ transcript: '', turns: [], audioDurationMs: 0 }),
+			chat: async () => {
+				throw new Error('Estas pruebas no llaman al modelo');
+			}
+		},
 		rutas: { ffmpeg: 'ffmpeg', ffprobe: 'ffprobe' },
 		carpetaMedios: mkdtempSync(join(tmpdir(), 'glosa-'))
 	};

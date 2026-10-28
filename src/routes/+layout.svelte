@@ -31,6 +31,11 @@
 			/>
 			<button type="submit">Search</button>
 		</form>
+		<nav aria-label="Main">
+			<a href={resolve('/ask')} aria-current={page.url.pathname === '/ask' ? 'page' : undefined}
+				>Ask the collection</a
+			>
+		</nav>
 	</header>
 {/if}
 
@@ -83,6 +88,17 @@
 	.buscar input {
 		flex: 1;
 		min-width: 0;
+	}
+
+	nav a {
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-1);
+		display: inline-block;
+		padding: 0.5rem 0;
+	}
+
+	nav a[aria-current='page'] {
+		text-decoration-thickness: 0.14em;
 	}
 
 	:global(input[type='search']),
