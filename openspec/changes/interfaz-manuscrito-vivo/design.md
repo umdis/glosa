@@ -26,7 +26,7 @@ Toda la audacia se gasta en una cosa: **la nota en el margen unida a su frase po
 ### I3. Componentes como clases sobre elementos nativos
 Viven en `componentes.css`: `.boton` (primario, secundario y fantasma), `.campo`, `.chip`, `.insignia`, `.tarjeta` e `.interruptor`. El interruptor es un `input type=checkbox` con `role="switch"`.
 - Se descartaron los componentes Svelte envoltorio para botones y campos: añaden capas, y la semántica nativa ya es la correcta.
-- Los componentes Svelte se reservan para piezas con lógica: `Glosa.svelte` (la nota con trazo) y `Fotograma.svelte` (la imagen con su marcador tipográfico de respaldo).
+- Los componentes Svelte se reservan para piezas con lógica: `Fotograma.svelte` (la imagen con su marcador tipográfico de respaldo). La glosa con hilo es una clase CSS (`.glosa`) porque no tiene lógica.
 
 ### I4. Fotogramas
 - La ruta `GET /videos/[id]/fotograma/[segundo]?w=320|640` responde un JPEG.
