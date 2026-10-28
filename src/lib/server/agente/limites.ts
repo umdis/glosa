@@ -1,5 +1,6 @@
 import type { Base } from '../db/base';
 import { normalizar } from '../texto/normalizar';
+import { verificarAfirmaciones } from '../verificacion/verificar';
 import type { ResultadoAgente } from './agente';
 
 /**
@@ -38,10 +39,29 @@ export function guardarRespuesta(db: Base, resultado: ResultadoAgente): void {
 	).run(normalizar(resultado.pregunta), JSON.stringify(resultado));
 }
 
-/** Respuesta guardada para la misma pregunta (sin tildes, mayúsculas ni signos), si existe. */
+/**
+ * Respuesta guardada para la misma pregunta (sin tildes, mayúsculas ni signos), si existe.
+ * Sus citas se vuelven a verificar contra la base actual: si un fragmento citado se ocultó
+ * después, esa cita cae, y la afirmación que se queda sin respaldo no se muestra.
+ */
 export function respuestaGuardada(db: Base, pregunta: string): ResultadoAgente | null {
 	const fila = db
 		.prepare(`SELECT resultado FROM respuestas_guardadas WHERE pregunta_norma = ?`)
 		.get(normalizar(pregunta)) as { resultado: string } | undefined;
-	return fila ? (JSON.parse(fila.resultado) as ResultadoAgente) : null;
+	if (!fila) return null;
+	const guardado = JSON.parse(fila.resultado) as ResultadoAgente;
+	const reverificadas = verificarAfirmaciones(
+		db,
+		guardado.afirmaciones.map((a) => ({
+			texto: a.texto,
+			citas: a.citas.map((c) => ({ fragmentoId: c.fragmentoId, frase: c.frase }))
+		}))
+	).filter((a) => a.respaldo === 'respaldada');
+	if (reverificadas.length === 0) return null;
+	return { ...guardado, afirmaciones: reverificadas };
+}
+
+/** Cualquier cambio de visibilidad invalida las respuestas guardadas: pueden citar lo oculto. */
+export function olvidarRespuestas(db: Base): void {
+	db.prepare(`DELETE FROM respuestas_guardadas`).run();
 }

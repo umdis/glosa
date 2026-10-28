@@ -1,3 +1,4 @@
+import { olvidarRespuestas } from '../agente/limites';
 import type { Base } from '../db/base';
 import { MODELO_RAZONAMIENTO, type ClienteMeta } from '../meta/cliente';
 
@@ -23,6 +24,7 @@ Flag ONLY fragments that expose sensitive information about identifiable private
 - menores: a minor who is named or identifiable.
 - persona_privada: other personal situations of a named or identifiable private person (family conflicts, finances, legal problems, confessions).
 Do NOT flag: biblical characters, historical or public figures (e.g. Martín Lutero), the speaker talking about people in general, or generic teaching about illness, death or sin.
+Prayer requests come in blocks: flag every fragment of the block, including the ones that only introduce or close it while naming people ("let us pray for the family of X", "and for X and all these people").
 When in doubt about a named private person, flag it. Write motivo in Spanish, in a few words, without repeating names.`;
 
 const ESQUEMA = {
@@ -95,26 +97,41 @@ export function leerMarcados(contenido: string, idsValidos: number[]): Marcado[]
 	return rellenarHuecos(marcados, idsValidos);
 }
 
+/** Huecos de hasta este tamaño entre dos fragmentos marcados también se protegen. */
+const HUECO_MAXIMO = 3;
+
 /**
- * Una petición de oración suele ocupar varios fragmentos seguidos. Si el modelo marca dos
- * fragmentos separados por uno solo, el del medio casi seguro es parte del mismo pasaje:
- * se marca también. Ante la duda, se protege.
+ * Las peticiones de oración ocupan bloques de fragmentos seguidos, y el modelo se salta algunos:
+ * en el ensayo del 2026-10-27 dejó visibles dos nombres, uno en el fragmento que abría el bloque
+ * («vamos a orar por los familiares de…») y otro en un hueco de dos fragmentos. Por eso:
+ * - se rellenan los huecos de hasta tres fragmentos entre dos marcados;
+ * - cada bloque se extiende un fragmento hacia cada lado.
+ * Ante la duda, se protege: el editor puede publicar lo que sobre.
  */
 export function rellenarHuecos(marcados: Marcado[], idsEnOrden: number[]): Marcado[] {
 	const porId = new Map(marcados.map((m) => [m.fragmentoId, m]));
 	const resultado = [...marcados];
-	for (let i = 1; i < idsEnOrden.length - 1; i++) {
-		const anterior = porId.get(idsEnOrden[i - 1]);
-		const siguiente = porId.get(idsEnOrden[i + 1]);
-		if (!porId.has(idsEnOrden[i]) && anterior && siguiente) {
-			const relleno: Marcado = {
-				fragmentoId: idsEnOrden[i],
-				categoria: anterior.categoria,
-				motivo: 'Entre dos fragmentos sensibles'
-			};
-			porId.set(relleno.fragmentoId, relleno);
-			resultado.push(relleno);
+	const proteger = (indice: number, origen: Marcado, motivo: string) => {
+		const id = idsEnOrden[indice];
+		if (id === undefined || porId.has(id)) return;
+		const nuevo: Marcado = { fragmentoId: id, categoria: origen.categoria, motivo };
+		porId.set(id, nuevo);
+		resultado.push(nuevo);
+	};
+
+	const indicesMarcados = idsEnOrden.map((id, i) => (porId.has(id) ? i : -1)).filter((i) => i >= 0);
+	for (let k = 1; k < indicesMarcados.length; k++) {
+		const desde = indicesMarcados[k - 1];
+		const hasta = indicesMarcados[k];
+		if (hasta - desde - 1 > 0 && hasta - desde - 1 <= HUECO_MAXIMO) {
+			const origen = porId.get(idsEnOrden[desde])!;
+			for (let i = desde + 1; i < hasta; i++) proteger(i, origen, 'Dentro de un bloque sensible');
 		}
+	}
+	for (const i of indicesMarcados) {
+		const origen = porId.get(idsEnOrden[i])!;
+		proteger(i - 1, origen, 'Junto a un fragmento sensible');
+		proteger(i + 1, origen, 'Junto a un fragmento sensible');
 	}
 	return resultado;
 }
@@ -167,5 +184,6 @@ export function aplicarClasificacion(
 				cambiar.run('visible', id);
 			}
 		}
+		olvidarRespuestas(db);
 	})();
 }

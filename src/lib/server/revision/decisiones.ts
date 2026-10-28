@@ -1,3 +1,4 @@
+import { olvidarRespuestas } from '../agente/limites';
 import type { Base } from '../db/base';
 
 export type Decision = 'aprobado' | 'oculto';
@@ -47,6 +48,7 @@ export function decidir(db: Base, id: number, decision: Decision, quien: string)
 				decision === 'aprobado' ? 'visible' : 'oculto',
 				elemento.fragmento_id
 			);
+			olvidarRespuestas(db);
 		}
 	})();
 	return true;

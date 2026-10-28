@@ -38,7 +38,7 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 - [x] 5.2 ★ Bucle del agente sobre la Responses API con salida estructurada (afirmaciones con citas por fragmento y frase), tope de pasos y de tokens
 - [x] 5.3 ★ Endpoint `/preguntar` que pasa la respuesta por la verificación (sección 4) antes de devolverla
 - [x] 5.4 ★ Interfaz de respuesta: afirmaciones, citas con video, minuto y frase, insignia de verificación (texto e icono) y enlace al momento
-- [ ] 5.5 Ensayar 10 preguntas reales sobre la colección de demo y ajustar el prompt y el umbral de verificación
+- [x] 5.5 Ensayar 10 preguntas reales sobre la colección de demo y ajustar el prompt y el umbral de verificación
 
 ## 6. Revisión humana y segmentos sensibles (31-oct)
 

@@ -248,6 +248,13 @@ const AMBIGUOS = new Set([
 const ANTES_DE_VERSICULO = /^(versiculo|versiculos|verso|versos)$/;
 /** Ventana (en palabras) para unir «Santiago capítulo uno» con el «versículo dos» que llega después. */
 const VENTANA_VERSICULO = 60;
+/** Palabras de relleno que pueden ir entre el libro y «capítulo» («Santiago, en el capítulo uno»). */
+const RELLENO = new Set(['en', 'el', 'la', 'de', 'eh', 'em', 'este']);
+/**
+ * Un «versículo N» suelto se refiere al último libro y capítulo citados si fue hace menos de
+ * esto y no se nombró otro libro en medio («…en el versículo doce dice Santiago…»).
+ */
+const CONTEXTO_MS = 15 * 60_000;
 
 /**
  * Busca referencias habladas en los fragmentos de un video. La referencia se registra en el
@@ -265,14 +272,66 @@ export function detectarDichas(
 			.map((texto) => ({ texto, fragmento: i }))
 	);
 	const textos = palabras.map((p) => p.texto);
+	const momento = (indice: number) => fragmentos[palabras[indice].fragmento];
 	const encontradas: ReferenciaDicha[] = [];
+	/** Posiciones de «versículo N» ya usados por una referencia, para no contarlos dos veces. */
+	const usados = new Set<number>();
+	/** Última referencia y dónde se nombró un libro por última vez, para el contexto. */
+	let contexto: { libro: string; capitulo: number; inicioMs: number } | null = null;
+
+	const registrar = (r: Referencia, indice: number) => {
+		const valida = validar(r);
+		if (!valida) return false;
+		const f = momento(indice);
+		encontradas.push({ ...valida, fragmentoId: f.id, momentoMs: f.inicioMs });
+		contexto = { libro: valida.libro, capitulo: valida.capitulo, inicioMs: f.inicioMs };
+		return true;
+	};
 
 	for (let i = 0; i < textos.length; i++) {
 		const libro = leerLibro(textos, i);
-		if (!libro) continue;
+		if (!libro) {
+			// «versículo N» suelto: se asigna al libro y capítulo en contexto.
+			if (ANTES_DE_VERSICULO.test(textos[i]) && !usados.has(i) && contexto) {
+				const numero = leerNumero(textos, saltarRelleno(textos, i + 1));
+				const enContexto = contexto as { libro: string; capitulo: number; inicioMs: number };
+				const ultima = encontradas.at(-1);
+				const yaContada =
+					numero &&
+					ultima?.libro === enContexto.libro &&
+					ultima.capitulo === enContexto.capitulo &&
+					ultima.versiculoInicio === numero.valor &&
+					momento(i).inicioMs - ultima.momentoMs < 60_000;
+				if (numero && !yaContada && momento(i).inicioMs - enContexto.inicioMs <= CONTEXTO_MS) {
+					const inicioNumero = saltarRelleno(textos, i + 1);
+					registrar(
+						{
+							libro: enContexto.libro,
+							capitulo: enContexto.capitulo,
+							versiculoInicio: numero.valor,
+							versiculoFin: leerFinDeRango(textos, inicioNumero + numero.largo)
+						},
+						i
+					);
+					usados.add(i);
+				}
+			}
+			continue;
+		}
+
+		// Nombrar otro libro sin capítulo también rompe el contexto anterior.
+		const contextoPrevio = contexto as { libro: string } | null;
+		if (contextoPrevio && contextoPrevio.libro !== libro.nombre) contexto = null;
+
 		let j = libro.fin;
+		let saltados = 0;
+		while (RELLENO.has(textos[j]) && saltados < 3) {
+			j++;
+			saltados++;
+		}
 		const dijoCapitulo = textos[j] === 'capitulo' || textos[j] === 'capitulos';
 		if (dijoCapitulo) j++;
+		else if (saltados > 0) continue; // «Santiago en el…» sin «capítulo» no es una cita
 		const capitulo = leerNumero(textos, j);
 		if (!capitulo) continue;
 		j += capitulo.largo;
@@ -284,11 +343,17 @@ export function detectarDichas(
 			versiculo = { inicio: inmediato.valor, fin: leerFinDeRango(textos, j + inmediato.largo) };
 		} else {
 			for (let k = j; k < Math.min(j + VENTANA_VERSICULO, textos.length); k++) {
-				if (k > j && leerLibro(textos, k)) break; // empezó otra referencia
+				const otro = k > j ? leerLibro(textos, k) : null;
+				if (otro && otro.nombre !== libro.nombre) break; // empezó otra referencia
 				if (!ANTES_DE_VERSICULO.test(textos[k])) continue;
-				const numero = leerNumero(textos, k + 1);
+				const inicioNumero = saltarRelleno(textos, k + 1);
+				const numero = leerNumero(textos, inicioNumero);
 				if (numero) {
-					versiculo = { inicio: numero.valor, fin: leerFinDeRango(textos, k + 1 + numero.largo) };
+					versiculo = {
+						inicio: numero.valor,
+						fin: leerFinDeRango(textos, inicioNumero + numero.largo)
+					};
+					usados.add(k);
 				}
 				break;
 			}
@@ -297,24 +362,54 @@ export function detectarDichas(
 		const base = libro.nombre.replace(/^\d /, '');
 		if (AMBIGUOS.has(base) && !dijoCapitulo && !versiculo) continue;
 
-		const valida = validar({
-			libro: libro.nombre,
-			capitulo: capitulo.valor,
-			versiculoInicio: versiculo?.inicio ?? null,
-			versiculoFin: versiculo?.fin ?? null
-		});
-		if (!valida) continue;
-		const fragmento = fragmentos[palabras[i].fragmento];
-		encontradas.push({ ...valida, fragmentoId: fragmento.id, momentoMs: fragmento.inicioMs });
+		const anterior = encontradas.at(-1);
+		const repetida =
+			anterior &&
+			anterior.libro === libro.nombre &&
+			anterior.capitulo === capitulo.valor &&
+			momento(i).inicioMs - anterior.momentoMs < 60_000;
+		if (repetida && (anterior.versiculoInicio !== null || !versiculo)) {
+			// «…Filipenses, en el capítulo cuatro, Filipenses capítulo cuatro…»: la misma cita
+			// repetida en voz alta se cuenta una vez, en el momento en que se nombró primero.
+			i = j - 1;
+			continue;
+		}
+		if (repetida && versiculo) {
+			// La repetición trae el versículo que faltaba: se completa la primera.
+			const completada = validar({
+				...anterior,
+				versiculoInicio: versiculo.inicio,
+				versiculoFin: versiculo.fin
+			});
+			if (completada) Object.assign(anterior, completada);
+			i = j - 1;
+			continue;
+		}
+
+		registrar(
+			{
+				libro: libro.nombre,
+				capitulo: capitulo.valor,
+				versiculoInicio: versiculo?.inicio ?? null,
+				versiculoFin: versiculo?.fin ?? null
+			},
+			i
+		);
 		i = j - 1;
 	}
 	return encontradas;
 }
 
-/** «al cinco», «a 9», «hasta el doce» tras el primer versículo. */
+function saltarRelleno(textos: string[], i: number): number {
+	let j = i;
+	while (j < i + 2 && (textos[j] === 'eh' || textos[j] === 'em' || textos[j] === 'el')) j++;
+	return j;
+}
+
+/** «al cinco», «a 9», «hasta el doce» tras el primer versículo. «dos y doce» son dos versículos. */
 function leerFinDeRango(textos: string[], i: number): number | null {
 	let j = i;
-	if (textos[j] === 'al' || textos[j] === 'a' || textos[j] === 'y') j++;
+	if (textos[j] === 'al' || textos[j] === 'a') j++;
 	else if (textos[j] === 'hasta') j += textos[j + 1] === 'el' ? 2 : 1;
 	else return null;
 	return leerNumero(textos, j)?.valor ?? null;

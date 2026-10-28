@@ -94,7 +94,9 @@ Cada cita se normaliza (minúsculas, sin tildes ni puntuación) y se busca en el
 - Los marcados quedan **pendientes** y fuera de la búsqueda pública y de las respuestas del agente hasta que una persona los aprueba o los oculta.
 - Igual con los resúmenes y temas propuestos.
 - **Los fragmentos nacen ocultos** (`pendiente`) al transcribirse y solo se publican cuando termina la clasificación (decidido durante la implementación, 2026-10-27). Así no hay ninguna ventana en la que una petición de oración sea pública por accidente: si la clasificación falla, todo sigue oculto hasta reintentarla.
-- Si el modelo marca dos fragmentos separados por uno solo, el del medio también se protege, porque una petición de oración suele ocupar varios fragmentos seguidos.
+- Las peticiones de oración ocupan bloques. Por eso se rellenan los huecos de hasta 3 fragmentos entre dos marcados y cada bloque se extiende un fragmento hacia cada lado.
+  - Esto se endureció tras el ensayo del 2026-10-27: con la regla anterior, de un solo hueco y sin extensión, la pregunta «¿Por quién oraron?» devolvió dos nombres de personas privadas, que estaban en el fragmento que abría el bloque y en un hueco de dos.
+- Las respuestas guardadas como respaldo se borran ante cualquier cambio de visibilidad. Además, al servirlas se vuelven a verificar contra la base: así una respuesta vieja no puede citar lo que se ocultó después.
 - Reclasificar nunca deshace una decisión humana.
 - **Nunca se usa el tier contributor**, que entrena con los datos.
 - El panel del editor (`/admin`) entra con la clave en una cookie `httpOnly` y `SameSite=Strict` que guarda un resumen de la clave, no la clave.

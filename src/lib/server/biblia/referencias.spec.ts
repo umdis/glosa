@@ -73,6 +73,52 @@ describe('detectarDichas', () => {
 		]);
 	});
 
+	it('casos reales de la prédica del 22-oct: relleno, repetición y versículo por contexto', () => {
+		const refs = detectarDichas([
+			frag(1, 345, 'Gracias, mijo, muy oportuno. en Santiago en el capítulo uno'),
+			frag(2, 356, 'Santiago capítulo uno eh hay una hay una expresión muy muy válida del'),
+			frag(3, 378, 'sentido de la tentación. En en el versículo dos dice hermanos míos, tened'),
+			frag(
+				4,
+				843,
+				'cosas y ustedes puedan identificarlas. En el versículo Eh doce, en el versículo doce dice Santiago, bienaventurado el varón'
+			),
+			frag(
+				5,
+				1344,
+				'Lo que que era verdadero. En las palabras de Pablo, en la carta a los Filipenses, en el capítulo cuatro, Filipenses capítulo cuatro, Pablo está'
+			),
+			frag(6, 1363, 'diciendo a los filipenses por lo demás, versículo ocho, por lo demás hermanos')
+		]);
+		expect(refs.map((r) => `${formatoReferencia(r)}@${r.momentoMs / 1000}`)).toEqual([
+			'Santiago 1:2@345',
+			'Santiago 1:12@843',
+			'Filipenses 4:8@1344'
+		]);
+	});
+
+	it('«versículos dos y doce» son dos versículos, no un rango', () => {
+		const refs = detectarDichas([frag(1, 0, 'Santiago capítulo uno versículos dos y doce')]);
+		expect(formatos(refs)).toEqual(['Santiago 1:2']);
+	});
+
+	it('el contexto caduca: un versículo suelto mucho después no se asigna', () => {
+		const refs = detectarDichas([
+			frag(1, 0, 'Santiago capítulo uno versículo dos'),
+			frag(2, 1200, 'como dice el versículo cinco')
+		]);
+		expect(formatos(refs)).toEqual(['Santiago 1:2']);
+	});
+
+	it('nombrar otro libro rompe el contexto', () => {
+		const refs = detectarDichas([
+			frag(1, 0, 'Santiago capítulo uno versículo dos'),
+			frag(2, 30, 'también Romanos lo explica bien'),
+			frag(3, 60, 'en el versículo cinco')
+		]);
+		expect(formatos(refs)).toEqual(['Santiago 1:2']);
+	});
+
 	it('entiende ordinales, rangos y cifras', () => {
 		const refs = detectarDichas([
 			frag(1, 0, 'Leamos primera de Corintios capítulo trece versículo cuatro al siete.'),
