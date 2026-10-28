@@ -46,6 +46,52 @@ function recortarFin(texto: string, alcance: number): string {
 	return texto.slice(0, corte === -1 ? alcance : corte) + '…';
 }
 
+/** Un carácter sin tildes ni mayúsculas, para comparar como lo haría alguien que busca. */
+function plegar(caracter: string): string {
+	return caracter.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
+/** Si `texto` contiene `consulta` sin importar tildes ni mayúsculas. */
+export function contiene(texto: string, consulta: string): boolean {
+	const q = [...consulta.trim()].map(plegar).join('');
+	return q !== '' && [...texto].map(plegar).join('').includes(q);
+}
+
+/**
+ * Parte `texto` en tramos, marcando cada aparición de `consulta` sin importar tildes ni
+ * mayúsculas. Los tramos conservan el texto original («tentación» resalta al buscar «tentacion»).
+ */
+export function resaltar(
+	texto: string,
+	consulta: string
+): Array<{ texto: string; marca: boolean }> {
+	const q = [...consulta.trim()].map(plegar).join('');
+	if (!q) return [{ texto, marca: false }];
+	const caracteres = [...texto];
+	// Para cada carácter plegado, la posición del carácter original del que viene.
+	let plegado = '';
+	const origen: number[] = [];
+	caracteres.forEach((c, i) => {
+		for (const p of plegar(c)) {
+			plegado += p;
+			origen.push(i);
+		}
+	});
+	const tramos: Array<{ texto: string; marca: boolean }> = [];
+	let desde = 0;
+	for (let i = plegado.indexOf(q); i !== -1; i = plegado.indexOf(q, i + q.length)) {
+		const inicio = origen[i];
+		const fin = origen[i + q.length - 1] + 1;
+		if (inicio > desde)
+			tramos.push({ texto: caracteres.slice(desde, inicio).join(''), marca: false });
+		tramos.push({ texto: caracteres.slice(inicio, fin).join(''), marca: true });
+		desde = fin;
+	}
+	if (desde < caracteres.length)
+		tramos.push({ texto: caracteres.slice(desde).join(''), marca: false });
+	return tramos;
+}
+
 interface Pasaje {
 	libro: string;
 	capitulo: number;

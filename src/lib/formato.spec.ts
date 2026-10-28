@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { concordancia, duracion, folio } from './formato';
+import {
+	capituloYVersiculo,
+	concordancia,
+	contiene,
+	duracion,
+	folio,
+	referencia,
+	resaltar
+} from './formato';
 
 describe('folio', () => {
 	it('compone minutos y, pasada la hora, horas', () => {
@@ -33,5 +41,33 @@ describe('concordancia', () => {
 		const inicio = texto.indexOf('gozo');
 		const { antes } = concordancia(texto, [[inicio, inicio + 4]], 20);
 		expect(antes).toBe('…tened por sumo ');
+	});
+});
+
+describe('resaltar y contiene', () => {
+	it('marca la palabra sin importar tildes ni mayúsculas y conserva el original', () => {
+		expect(resaltar('La Tentación y la tentacion', 'tentación')).toEqual([
+			{ texto: 'La ', marca: false },
+			{ texto: 'Tentación', marca: true },
+			{ texto: ' y la ', marca: false },
+			{ texto: 'tentacion', marca: true }
+		]);
+		expect(contiene('Corazón', 'CORAZON')).toBe(true);
+		expect(contiene('Corazón', '  ')).toBe(false);
+	});
+
+	it('sin consulta devuelve el texto entero', () => {
+		expect(resaltar('Hermanos', '')).toEqual([{ texto: 'Hermanos', marca: false }]);
+	});
+});
+
+describe('referencia', () => {
+	it('compone libro, capítulo y versículos', () => {
+		const base = { libro: 'Deuteronomio', capitulo: 6, versiculoInicio: 6, versiculoFin: 9 };
+		expect(referencia(base)).toBe('Deuteronomio 6:6–9');
+		expect(referencia({ ...base, versiculoFin: 6 })).toBe('Deuteronomio 6:6');
+		expect(capituloYVersiculo({ capitulo: 6, versiculoInicio: null, versiculoFin: null })).toBe(
+			'6'
+		);
 	});
 });
