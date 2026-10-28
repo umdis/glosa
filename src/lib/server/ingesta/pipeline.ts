@@ -1,6 +1,13 @@
 import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { guardarPasajesDichos } from '../biblia/indice';
+import { guardarPasajesDichos, guardarPasajesEnPantalla } from '../biblia/indice';
+import {
+	analizarTramo,
+	cortarEnTramos,
+	guardarEnPantalla,
+	limpiarTramos,
+	type TextoEnPantalla
+} from '../pantalla/pantalla';
 import { NOMBRES_LIBROS } from '../biblia/libros';
 import { detectarDichas } from '../biblia/referencias';
 import type { Base } from '../db/base';
@@ -21,7 +28,7 @@ import { transcribirVentanas } from './transcripcion';
 
 export interface DependenciasIngesta {
 	db: Base;
-	meta: Pick<ClienteMeta, 'transcribir' | 'chat'>;
+	meta: Pick<ClienteMeta, 'transcribir' | 'chat' | 'responses' | 'subirArchivo' | 'borrarArchivo'>;
 	rutas: RutasFfmpeg;
 	/** Carpeta raíz de los medios; cada video vive en `<carpetaMedios>/<id>/`. */
 	carpetaMedios: string;
@@ -131,13 +138,38 @@ const pasoPasajes: Paso = {
 	}
 };
 
-/** Pasos en orden. La sección 8 (lo que aparece en pantalla) se agrega aquí. */
+/**
+ * Lo que aparece en pantalla, en tramos de 10 min analizados por Muse Spark, y los pasajes
+ * escritos en ello. Es el paso más caro (≈ US$0,11 por tramo) y no bloquea a los demás.
+ */
+const pasoPantalla: Paso = {
+	nombre: 'pantalla',
+	requiere: ['transcribir'],
+	async ejecutar({ db, meta, rutas, videoId, carpeta }) {
+		const carpetaTramos = join(carpeta, 'tramos');
+		try {
+			const tramos = await cortarEnTramos(
+				rutas,
+				join(carpeta, ARCHIVO_REPRODUCCION),
+				carpetaTramos
+			);
+			const textos: TextoEnPantalla[] = [];
+			for (const tramo of tramos) textos.push(...(await analizarTramo(meta, tramo)));
+			guardarPasajesEnPantalla(db, videoId, guardarEnPantalla(db, videoId, textos));
+		} finally {
+			await limpiarTramos(carpetaTramos);
+		}
+	}
+};
+
+/** Pasos en orden. */
 export const PASOS: Paso[] = [
 	pasoNormalizar,
 	pasoTranscribir,
 	pasoSensibles,
 	pasoPasajes,
-	pasoFicha
+	pasoFicha,
+	pasoPantalla
 ];
 
 /** Reemplaza los fragmentos del video; así reintentar la transcripción no duplica nada. */

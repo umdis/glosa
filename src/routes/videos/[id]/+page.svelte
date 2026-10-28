@@ -128,6 +128,12 @@
 								(now playing)</span
 							>{/if}
 					</p>
+					{#each data.pantallaPorFragmento[f.id] ?? [] as p (p.momentoMs)}
+						<aside class="pantalla" aria-label="Shown on screen at {folio(p.momentoMs)}">
+							<p class="rotulo" lang="en">Shown on screen, {folio(p.momentoMs)}</p>
+							<p class="escrito">{p.texto}</p>
+						</aside>
+					{/each}
 				</li>
 			{/each}
 		</ol>
@@ -173,6 +179,30 @@
 	.iluminacion {
 		margin: 2rem 0 1rem;
 		max-width: 48rem;
+	}
+
+	/* Lo escrito en pantalla, intercalado en su momento: un recuadro como la nota de un copista. */
+	.pantalla {
+		grid-column: -2;
+		margin: 0.25rem 0 1.25rem;
+		padding: 0.6rem 0.9rem;
+		border: 1px solid var(--suave);
+		border-radius: 2px;
+		background: var(--papel);
+	}
+
+	.pantalla p {
+		margin: 0;
+	}
+
+	.rotulo {
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-0);
+		color: var(--suave);
+	}
+
+	.escrito {
+		white-space: pre-line;
 	}
 
 	.resumen {

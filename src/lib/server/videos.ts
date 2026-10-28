@@ -1,4 +1,5 @@
 import type { Base } from './db/base';
+import { normalizar } from './texto/normalizar';
 
 export interface VideoPublico {
 	id: string;
@@ -43,6 +44,45 @@ export function fragmentosVisibles(db: Base, videoId: string): FragmentoPublico[
 			 WHERE video_id = ? AND visibilidad = 'visible' ORDER BY orden`
 		)
 		.all(videoId) as FragmentoPublico[];
+}
+
+export interface TextoPantallaPublico {
+	videoId: string;
+	titulo: string;
+	momentoMs: number;
+	texto: string;
+}
+
+/** Lo que apareció en pantalla en un video, en orden. */
+export function textosEnPantalla(db: Base, videoId: string): TextoPantallaPublico[] {
+	return db
+		.prepare(
+			`SELECT p.video_id AS videoId, v.titulo, p.momento_ms AS momentoMs, p.texto
+			 FROM en_pantalla p JOIN videos v ON v.id = p.video_id
+			 WHERE p.video_id = ? ORDER BY p.momento_ms`
+		)
+		.all(videoId) as TextoPantallaPublico[];
+}
+
+/**
+ * Busca en lo que apareció en pantalla: todas las palabras de la consulta, sin tildes ni
+ * mayúsculas. La tabla es pequeña (decenas de textos por video), así que se filtra en memoria.
+ */
+export function buscarEnPantalla(db: Base, consulta: string, limite = 20): TextoPantallaPublico[] {
+	const palabras = normalizar(consulta).split(' ').filter(Boolean);
+	if (palabras.length === 0) return [];
+	const filas = db
+		.prepare(
+			`SELECT p.video_id AS videoId, v.titulo, p.momento_ms AS momentoMs, p.texto
+			 FROM en_pantalla p JOIN videos v ON v.id = p.video_id ORDER BY v.titulo, p.momento_ms`
+		)
+		.all() as TextoPantallaPublico[];
+	return filas
+		.filter((f) => {
+			const texto = normalizar(f.texto);
+			return palabras.every((p) => texto.includes(p));
+		})
+		.slice(0, limite);
 }
 
 /** Subtítulos WebVTT generados a partir de la transcripción visible. */

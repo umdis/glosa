@@ -57,9 +57,9 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 8. Índice visual (1-nov)
 
-- [ ] 8.1 Corte del video en tramos de 10 min, subida a Files API con `expires_after` y borrado al terminar
-- [ ] 8.2 Extracción de textos en pantalla con su momento (JSON) y guardado en `en_pantalla`
-- [ ] 8.3 Mostrar los textos en pantalla en la página del video y hacerlos buscables
+- [x] 8.1 Corte del video en tramos de 10 min, subida a Files API con `expires_after` y borrado al terminar
+- [x] 8.2 Extracción de textos en pantalla con su momento (JSON) y guardado en `en_pantalla`
+- [x] 8.3 Mostrar los textos en pantalla en la página del video y hacerlos buscables
 
 ## 9. Acceso de demo (2-nov)
 

@@ -1,10 +1,11 @@
 import { buscar } from '#lib/server/busqueda/buscar.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import { buscarEnPantalla } from '#lib/server/videos.js';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
 	const consulta = (url.searchParams.get('q') ?? '').trim().slice(0, 200);
-	if (!consulta) return { consulta, grupos: [], total: 0 };
+	if (!consulta) return { consulta, grupos: [], total: 0, enPantalla: [] };
 
 	const { db } = obtenerServicios();
 	const resultados = buscar(db, consulta);
@@ -21,5 +22,10 @@ export const load: PageServerLoad = ({ url }) => {
 	}
 	for (const grupo of grupos.values()) grupo.momentos.sort((a, b) => a.inicioMs - b.inicioMs);
 
-	return { consulta, grupos: [...grupos.values()], total: resultados.length };
+	return {
+		consulta,
+		grupos: [...grupos.values()],
+		total: resultados.length,
+		enPantalla: buscarEnPantalla(db, consulta)
+	};
 };

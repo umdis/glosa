@@ -19,7 +19,7 @@
 	{#if !data.consulta}
 		<h1>Search what was said</h1>
 		<p class="nota">Type a word or a phrase in the search box to find every moment it was said.</p>
-	{:else if data.total === 0}
+	{:else if data.total === 0 && data.enPantalla.length === 0}
 		<h1>Nothing found for “{data.consulta}”</h1>
 		<p class="nota">
 			No transcript contains those words. Try a single word, another form of it, or a shorter
@@ -55,6 +55,28 @@
 				</ol>
 			</section>
 		{/each}
+
+		{#if data.enPantalla.length}
+			<section class="grupo" aria-labelledby="t-pantalla">
+				<h2 id="t-pantalla">Shown on screen</h2>
+				<ul class="pantalla">
+					{#each data.enPantalla as p (`${p.videoId}-${p.momentoMs}`)}
+						<li>
+							<a
+								class="folio"
+								href={resolve(`/videos/[id]?t=${Math.floor(p.momentoMs / 1000)}`, {
+									id: p.videoId
+								})}
+								aria-label="Play {p.titulo} from {folio(p.momentoMs)}"
+								><span aria-hidden="true">¶ </span>{folio(p.momentoMs)}</a
+							>
+							<span class="titulo">{p.titulo}</span>
+							<p lang="es">{p.texto}</p>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
 	{/if}
 </div>
 
@@ -128,6 +150,32 @@
 
 	.despues {
 		mask-image: linear-gradient(to left, transparent, #000 3rem);
+	}
+
+	.pantalla {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.pantalla li {
+		margin-bottom: 1rem;
+	}
+
+	.pantalla .titulo {
+		font-family: var(--letra-interfaz);
+		color: var(--suave);
+		margin-left: 0.5rem;
+	}
+
+	.pantalla p {
+		margin: 0.25rem 0 0;
+		padding: 0.5rem 0.8rem;
+		border: 1px solid var(--suave);
+		border-radius: 2px;
+		background: var(--papel);
+		white-space: pre-line;
+		max-width: var(--medida);
 	}
 
 	/* En pantallas angostas la columna central no cabe: cada momento se lee como una línea corrida. */
