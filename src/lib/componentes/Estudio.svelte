@@ -38,8 +38,16 @@
 {#if !abierto}
 	<button type="button" class="secundario" onclick={abrir}>Write a study from this answer</button>
 {:else}
-	<section class="estudio" aria-labelledby="t-estudio">
-		<h2 id="t-estudio">Your study</h2>
+	<section class="estudio tarjeta" aria-labelledby="t-estudio">
+		<div class="barra">
+			<h2 id="t-estudio">Your study</h2>
+			<div class="acciones">
+				<button type="button" onclick={descargar}>Download Markdown</button>
+				<button type="button" class="secundario" onclick={() => window.print()}
+					>Print or save as PDF</button
+				>
+			</div>
+		</div>
 		<p class="nota">
 			A draft with the verified quotes only. Edit it freely, then download or print it: Glosa does
 			not store it. Links take readers to the exact moment of each quote.
@@ -47,12 +55,6 @@
 		<label for="texto-estudio">Study text (Markdown)</label>
 		<textarea id="texto-estudio" bind:this={campo} bind:value={texto} rows="16" lang="es"
 		></textarea>
-		<div class="acciones">
-			<button type="button" onclick={descargar}>Download Markdown</button>
-			<button type="button" class="secundario" onclick={() => window.print()}
-				>Print or save as PDF</button
-			>
-		</div>
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- HTML escapado por markdownImprimible -->
 		<div class="para-imprimir" lang="es">{@html imprimible}</div>
 	</section>
@@ -60,12 +62,25 @@
 
 <style>
 	.estudio {
-		margin-top: 2.5rem;
-		max-width: var(--medida);
+		margin-top: var(--e-8);
+		max-width: 46rem;
+		padding: var(--e-6);
+	}
+
+	/* Barra del panel: el título y lo que se puede hacer con el estudio, siempre a la vista. */
+	.barra {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--e-3);
+		padding-bottom: var(--e-4);
+		border-bottom: 1px solid var(--linea);
 	}
 
 	h2 {
 		font-size: var(--t-3);
+		font-style: italic;
 	}
 
 	.nota {
@@ -76,26 +91,21 @@
 	label {
 		display: block;
 		font-family: var(--letra-interfaz);
-		margin: 1rem 0 0.3rem;
+		margin: var(--e-4) 0 var(--e-1);
 	}
 
 	textarea {
 		width: 100%;
 		font-family: var(--letra-texto);
-		font-size: var(--t-1);
 		line-height: 1.55;
 		background: var(--papel);
-		color: var(--tinta);
-		border: 1px solid var(--suave);
-		border-radius: 3px;
-		padding: 0.7rem;
+		padding: var(--e-3);
 	}
 
 	.acciones {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-top: 0.75rem;
+		gap: var(--e-2);
 	}
 
 	.para-imprimir {

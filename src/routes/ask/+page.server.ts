@@ -1,11 +1,30 @@
 import { fail } from '@sveltejs/kit';
 import { preguntar } from '#lib/server/agente/agente.js';
 import { crearLimitador, guardarRespuesta, respuestaGuardada } from '#lib/server/agente/limites.js';
+import { referencia } from '#lib/formato.js';
+import { indicePublico } from '#lib/server/biblia/indice.js';
+import { fichaAprobada } from '#lib/server/revision/resumen.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
-import type { Actions } from './$types';
+import { listarVideos } from '#lib/server/videos.js';
+import type { Actions, PageServerLoad } from './$types';
 
 /** Seis preguntas cada diez minutos por visitante: suficiente para probar, no para abusar. */
 const limitador = crearLimitador(6, 10 * 60_000);
+
+/**
+ * Preguntas de ejemplo armadas con datos de la colección (temas aprobados y pasajes dichos).
+ * Nunca con las preguntas guardadas: serían las de otros visitantes.
+ */
+export const load: PageServerLoad = () => {
+	const { db } = obtenerServicios();
+	const temas = listarVideos(db).flatMap((v) => fichaAprobada(db, v.id).temas);
+	const pasajes = indicePublico(db)
+		.flatMap((l) => l.pasajes)
+		.filter((p) => p.versiculoInicio !== null && p.momentos.some((m) => m.origen === 'dicho'))
+		.map(referencia);
+	const temasUnicos = [...new Set([...temas, ...pasajes])];
+	return { ejemplos: temasUnicos.slice(0, 3).map((t) => `What was said about ${t}?`) };
+};
 
 export const actions: Actions = {
 	/** Pregunta a la colección. Es POST: cada pregunta cuesta y no debe dispararla un rastreador. */
