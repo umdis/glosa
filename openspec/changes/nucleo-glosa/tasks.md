@@ -27,10 +27,10 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 4. Verificación de citas (30-oct)
 
-- [ ] 4.1 ★ Normalización de texto (minúsculas, sin tildes ni puntuación) y comparación en orden con umbral configurable
-- [ ] 4.2 ★ Búsqueda de la frase en el fragmento citado y sus vecinos; anclaje al fragmento real; estados `verificada` / `no verificada`
-- [ ] 4.3 ★ Marcado de afirmaciones `sin respaldo`; minutos solo desde la transcripción
-- [ ] 4.4 ★ Pruebas: cita correcta, cita en el fragmento vecino, cita inventada, minuto propuesto por el modelo que se ignora
+- [x] 4.1 ★ Normalización de texto (minúsculas, sin tildes ni puntuación) y comparación en orden con umbral configurable
+- [x] 4.2 ★ Búsqueda de la frase en el fragmento citado y sus vecinos; anclaje al fragmento real; estados `verificada` / `no verificada`
+- [x] 4.3 ★ Marcado de afirmaciones `sin respaldo`; minutos solo desde la transcripción
+- [x] 4.4 ★ Pruebas: cita correcta, cita en el fragmento vecino, cita inventada, minuto propuesto por el modelo que se ignora
 
 ## 5. Agente investigador (30–31-oct)
 
