@@ -35,6 +35,10 @@
 			<a href={resolve('/ask')} aria-current={page.url.pathname === '/ask' ? 'page' : undefined}
 				>Ask the collection</a
 			>
+			<a
+				href={resolve('/passages')}
+				aria-current={page.url.pathname === '/passages' ? 'page' : undefined}>Scripture index</a
+			>
 		</nav>
 	</header>
 {/if}
@@ -88,6 +92,12 @@
 	.buscar input {
 		flex: 1;
 		min-width: 0;
+	}
+
+	nav {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 1.25rem;
 	}
 
 	nav a {

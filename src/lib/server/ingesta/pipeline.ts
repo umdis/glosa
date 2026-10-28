@@ -1,6 +1,8 @@
 import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { guardarPasajesDichos } from '../biblia/indice';
 import { NOMBRES_LIBROS } from '../biblia/libros';
+import { detectarDichas } from '../biblia/referencias';
 import type { Base } from '../db/base';
 import { extraerAudio, normalizarVideo, probar, type RutasFfmpeg } from '../medios/ffmpeg';
 import { cortarEnVentanas } from '../medios/wav';
@@ -112,8 +114,31 @@ const pasoFicha: Paso = {
 	}
 };
 
-/** Pasos en orden. Las secciones siguientes (pantalla, pasajes) se agregan aquí. */
-export const PASOS: Paso[] = [pasoNormalizar, pasoTranscribir, pasoSensibles, pasoFicha];
+/**
+ * Pasajes bíblicos dichos: detector por reglas validado contra el canon. No llama a la IA.
+ * Se guardan todos; el índice público solo muestra los de fragmentos visibles.
+ */
+const pasoPasajes: Paso = {
+	nombre: 'pasajes',
+	requiere: ['transcribir'],
+	async ejecutar({ db, videoId }) {
+		const fragmentos = db
+			.prepare(
+				`SELECT id, inicio_ms AS inicioMs, texto FROM fragmentos WHERE video_id = ? ORDER BY orden`
+			)
+			.all(videoId) as Array<{ id: number; inicioMs: number; texto: string }>;
+		guardarPasajesDichos(db, videoId, detectarDichas(fragmentos));
+	}
+};
+
+/** Pasos en orden. La sección 8 (lo que aparece en pantalla) se agrega aquí. */
+export const PASOS: Paso[] = [
+	pasoNormalizar,
+	pasoTranscribir,
+	pasoSensibles,
+	pasoPasajes,
+	pasoFicha
+];
 
 /** Reemplaza los fragmentos del video; así reintentar la transcripción no duplica nada. */
 export function guardarFragmentos(

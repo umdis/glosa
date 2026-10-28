@@ -49,11 +49,11 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 7. Índice bíblico (1-nov)
 
-- [ ] 7.1 ★ Tabla del canon (66 libros, capítulos y versículos por capítulo) desde una fuente con licencia abierta, citada en el repo
-- [ ] 7.2 ★ Detector por reglas en español con ventana de fragmentos vecinos; pruebas con «Santiago capítulo uno… versículo dos»
-- [ ] 7.3 ★ Validación contra el canon que descarta lo imposible; pruebas con Santiago 9:4
+- [x] 7.1 ★ Tabla del canon (66 libros, capítulos y versículos por capítulo) desde una fuente con licencia abierta, citada en el repo
+- [x] 7.2 ★ Detector por reglas en español con ventana de fragmentos vecinos; pruebas con «Santiago capítulo uno… versículo dos»
+- [x] 7.3 ★ Validación contra el canon que descarta lo imposible; pruebas con Santiago 9:4
 - [ ] 7.4 Pasajes propuestos por Spark (dichos y en pantalla) que pasan por la misma validación
-- [ ] 7.5 ★ Página de pasajes agrupados por libro con todos los momentos de la colección
+- [x] 7.5 ★ Página de pasajes agrupados por libro con todos los momentos de la colección
 
 ## 8. Índice visual (1-nov)
 
