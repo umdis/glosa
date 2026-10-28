@@ -1,8 +1,15 @@
+import type Database from 'better-sqlite3';
+import { normalizar } from '../texto/normalizar';
+import { textoARaices } from '../texto/raices';
+
 /**
  * Migraciones en orden. La posición en el arreglo es la versión (`PRAGMA user_version`).
- * Nunca se edita una migración ya aplicada: se agrega una nueva al final.
+ * Nunca se edita una migración ya aplicada: se agrega una nueva al final. Una migración es SQL
+ * o, si necesita lógica de la app (normalizar, raíces), una función.
  */
-export const migraciones: string[] = [
+export type Migracion = string | ((db: Database.Database) => void);
+
+export const migraciones: Migracion[] = [
 	/* 1 — esquema inicial */ `
 	CREATE TABLE videos (
 		id TEXT PRIMARY KEY,
@@ -128,5 +135,56 @@ export const migraciones: string[] = [
 		costo_usd REAL NOT NULL
 	);
 	CREATE INDEX gasto_momento ON gasto (momento);
-	`
+	`,
+
+	/*
+	 * 2 — trigramas sobre texto normalizado por la app. El `remove_diacritics` de SQLite también
+	 * quita la virgulilla de la ñ, y «año» acababa encontrando «hermano». `normalizar` conserva
+	 * la ñ. De paso, recalcula las raíces de los fragmentos guardados antes del stemmer.
+	 */
+	(db) => {
+		db.exec(`
+		ALTER TABLE fragmentos ADD COLUMN texto_norma TEXT NOT NULL DEFAULT '';
+		DROP TRIGGER fragmentos_ai;
+		DROP TRIGGER fragmentos_ad;
+		DROP TRIGGER fragmentos_au;
+		DROP TABLE fragmentos_trigramas;
+		`);
+		const actualizar = db.prepare(
+			`UPDATE fragmentos SET texto_norma = ?, texto_raiz = ? WHERE id = ?`
+		);
+		const filas = db.prepare(`SELECT id, texto FROM fragmentos`).all() as Array<{
+			id: number;
+			texto: string;
+		}>;
+		for (const f of filas) actualizar.run(normalizar(f.texto), textoARaices(f.texto), f.id);
+		db.exec(`
+		CREATE VIRTUAL TABLE fragmentos_trigramas USING fts5 (
+			texto_norma,
+			content = 'fragmentos', content_rowid = 'id',
+			tokenize = 'trigram'
+		);
+		INSERT INTO fragmentos_raices (fragmentos_raices) VALUES ('rebuild');
+		INSERT INTO fragmentos_trigramas (fragmentos_trigramas) VALUES ('rebuild');
+
+		CREATE TRIGGER fragmentos_ai AFTER INSERT ON fragmentos BEGIN
+			INSERT INTO fragmentos_raices (rowid, texto_raiz) VALUES (new.id, new.texto_raiz);
+			INSERT INTO fragmentos_trigramas (rowid, texto_norma) VALUES (new.id, new.texto_norma);
+		END;
+		CREATE TRIGGER fragmentos_ad AFTER DELETE ON fragmentos BEGIN
+			INSERT INTO fragmentos_raices (fragmentos_raices, rowid, texto_raiz)
+				VALUES ('delete', old.id, old.texto_raiz);
+			INSERT INTO fragmentos_trigramas (fragmentos_trigramas, rowid, texto_norma)
+				VALUES ('delete', old.id, old.texto_norma);
+		END;
+		CREATE TRIGGER fragmentos_au AFTER UPDATE OF texto_raiz, texto_norma ON fragmentos BEGIN
+			INSERT INTO fragmentos_raices (fragmentos_raices, rowid, texto_raiz)
+				VALUES ('delete', old.id, old.texto_raiz);
+			INSERT INTO fragmentos_trigramas (fragmentos_trigramas, rowid, texto_norma)
+				VALUES ('delete', old.id, old.texto_norma);
+			INSERT INTO fragmentos_raices (rowid, texto_raiz) VALUES (new.id, new.texto_raiz);
+			INSERT INTO fragmentos_trigramas (rowid, texto_norma) VALUES (new.id, new.texto_norma);
+		END;
+		`);
+	}
 ];

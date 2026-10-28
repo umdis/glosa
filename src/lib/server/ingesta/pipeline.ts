@@ -6,6 +6,7 @@ import { extraerAudio, normalizarVideo, probar, type RutasFfmpeg } from '../medi
 import { cortarEnVentanas } from '../medios/wav';
 import type { ClienteMeta } from '../meta/cliente';
 import { normalizar } from '../texto/normalizar';
+import { textoARaices } from '../texto/raices';
 import { fragmentar, fusionarVentanas } from './fusion';
 import { transcribirVentanas } from './transcripcion';
 
@@ -75,14 +76,21 @@ export function guardarFragmentos(
 ): void {
 	const borrar = db.prepare(`DELETE FROM fragmentos WHERE video_id = ?`);
 	const insertar = db.prepare(
-		`INSERT INTO fragmentos (video_id, orden, inicio_ms, fin_ms, texto, texto_raiz)
-		 VALUES (?, ?, ?, ?, ?, ?)`
+		`INSERT INTO fragmentos (video_id, orden, inicio_ms, fin_ms, texto, texto_raiz, texto_norma)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)`
 	);
 	db.transaction(() => {
 		borrar.run(videoId);
 		fragmentos.forEach((f, orden) => {
-			// TODO(tarea 3.1): texto_raiz pasará por el stemmer de español; hoy solo se normaliza.
-			insertar.run(videoId, orden, f.inicioMs, f.finMs, f.texto, normalizar(f.texto));
+			insertar.run(
+				videoId,
+				orden,
+				f.inicioMs,
+				f.finMs,
+				f.texto,
+				textoARaices(f.texto),
+				normalizar(f.texto)
+			);
 		});
 	})();
 }

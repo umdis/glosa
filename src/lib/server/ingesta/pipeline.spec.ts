@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { abrirBase } from '../db/base';
+import { textoARaices } from '../texto/raices';
 import {
 	guardarFragmentos,
 	procesarVideo,
@@ -124,7 +125,7 @@ describe('recuperarInterrumpidos', () => {
 });
 
 describe('guardarFragmentos', () => {
-	it('reemplaza los fragmentos sin duplicarlos y los deja buscables', () => {
+	it('reemplaza los fragmentos sin duplicarlos y los deja buscables por su raíz', () => {
 		const { db } = preparar([]);
 		const fragmentos = [
 			{ inicioMs: 383_000, finMs: 400_000, texto: 'Hermanos míos, tened por sumo gozo' },
@@ -137,9 +138,9 @@ describe('guardarFragmentos', () => {
 			db
 				.prepare(
 					`SELECT f.inicio_ms AS inicio FROM fragmentos_raices r
-					 JOIN fragmentos f ON f.id = r.rowid WHERE fragmentos_raices MATCH 'pruebas'`
+					 JOIN fragmentos f ON f.id = r.rowid WHERE fragmentos_raices MATCH ?`
 				)
-				.all()
+				.all(textoARaices('prueba'))
 		).toEqual([{ inicio: 400_000 }]);
 	});
 });

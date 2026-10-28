@@ -18,11 +18,11 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 3. Búsqueda por lo dicho (29-oct)
 
-- [ ] 3.1 ★ Normalización y raíces en español: elegir y verificar un stemmer Snowball de español con licencia abierta; función única `normalizar` (sin tildes, minúsculas) y `raiz`, compartidas por el indexado y la consulta; comprobar si el stemmer da mejores raíces aplicado antes o después de quitar las tildes
-- [ ] 3.2 ★ Pruebas de búsqueda con palabras de las prédicas: «tentaciones» → «tentación», «tentacion» sin tilde, y que una palabra corta no dispare los trigramas. Dejar documentado qué pares derivados no une ni el stemmer ni los trigramas (p. ej. «criar» / «crianza»); esos los cubre la reformulación del agente
-- [ ] 3.3 ★ Endpoint de búsqueda: primero por raíces (`bm25`), luego trigramas sin duplicar; fragmento, video, minuto y contexto con resaltado sobre el texto original; solo contenido visible (aprobado)
-- [ ] 3.4 ★ Página de video: reproductor y transcripción sincronizada que resalta el fragmento actual
-- [ ] 3.5 ★ Página de búsqueda con resultados que abren el video en el minuto exacto
+- [x] 3.1 ★ Normalización y raíces en español: elegir y verificar un stemmer Snowball de español con licencia abierta; función única `normalizar` (sin tildes, minúsculas) y `raiz`, compartidas por el indexado y la consulta; comprobar si el stemmer da mejores raíces aplicado antes o después de quitar las tildes
+- [x] 3.2 ★ Pruebas de búsqueda con palabras de las prédicas: «tentaciones» → «tentación», «tentacion» sin tilde, y que una palabra corta no dispare los trigramas. Dejar documentado qué pares derivados no une ni el stemmer ni los trigramas (p. ej. «criar» / «crianza»); esos los cubre la reformulación del agente
+- [x] 3.3 ★ Endpoint de búsqueda: primero por raíces (`bm25`), luego trigramas sin duplicar; fragmento, video, minuto y contexto con resaltado sobre el texto original; solo contenido visible (aprobado)
+- [x] 3.4 ★ Página de video: reproductor y transcripción sincronizada que resalta el fragmento actual
+- [x] 3.5 ★ Página de búsqueda con resultados que abren el video en el minuto exacto
 - [ ] 3.6 Navegación completa con teclado, foco visible y comprobación de contraste (WCAG 2.2 AA)
 
 ## 4. Verificación de citas (30-oct)

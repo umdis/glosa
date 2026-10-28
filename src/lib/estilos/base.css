@@ -1,0 +1,131 @@
+/*
+ * Glosa — «el manuscrito vivo» (design.md D12).
+ * Vitela raspada (gris verdosa, fría), tinta ferrogálica y un solo acento: el carmín de las
+ * rúbricas, reservado para los momentos del video a los que se puede saltar.
+ * Contrastes medidos (WCAG 2.2): todo el texto ≥ 4,7:1 en ambos temas. `--pauta` es < 3:1 y
+ * solo se usa como adorno, nunca como borde de un control ni como foco.
+ */
+@import '@fontsource-variable/alegreya/wght.css';
+@import '@fontsource-variable/alegreya/wght-italic.css';
+@import '@fontsource/alegreya-sans/400.css';
+@import '@fontsource/alegreya-sans/500.css';
+@import '@fontsource/alegreya-sans/700.css';
+
+:root {
+	color-scheme: light dark;
+
+	--fondo: #eceee8;
+	--papel: #f5f6f2;
+	--tinta: #1f2533;
+	--suave: #4a5162;
+	--rubrica: #a3122a;
+	--pauta: #9aa092;
+	--marca: #d9dec9;
+
+	--letra-texto: 'Alegreya Variable', 'Alegreya', Georgia, serif;
+	--letra-interfaz: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+
+	/* Escala tipográfica modular 1,25 sobre 1.125rem (Bringhurst: pocas medidas, bien elegidas). */
+	--t-0: 0.9rem;
+	--t-1: 1.125rem;
+	--t-2: 1.406rem;
+	--t-3: 1.758rem;
+	--t-4: 2.197rem;
+	--t-5: 3.433rem;
+
+	--medida: 34rem;
+	--margen: clamp(1rem, 4vw, 3rem);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--fondo: #161a24;
+		--papel: #1c2130;
+		--tinta: #e4e3da;
+		--suave: #a9aeb9;
+		--rubrica: #ee6b7d;
+		--pauta: #5a6275;
+		--marca: #3a4231;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--fondo);
+	color: var(--tinta);
+	font-family: var(--letra-texto);
+	font-size: 100%;
+	line-height: 1.6;
+	font-variant-numeric: oldstyle-nums proportional-nums;
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+	font-weight: 500;
+	line-height: 1.15;
+	margin: 0;
+	text-wrap: balance;
+}
+
+a {
+	color: inherit;
+	text-decoration-thickness: 0.06em;
+	text-underline-offset: 0.18em;
+}
+
+/* Foco: tinta plena con separación, visible sobre cualquier fondo del tema. */
+:focus-visible {
+	outline: 3px solid var(--tinta);
+	outline-offset: 3px;
+	border-radius: 2px;
+}
+
+/* Lo que solo leen los lectores de pantalla. */
+.solo-lector {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/*
+ * Folio: la marca de tiempo compuesta como la numeración de un manuscrito. Numerales
+ * tabulares para que las columnas de minutos se alineen; el calderón va en carmín.
+ */
+.folio {
+	font-family: var(--letra-texto);
+	font-variant-numeric: lining-nums tabular-nums;
+	color: var(--rubrica);
+	white-space: nowrap;
+}
+
+mark {
+	background: var(--marca);
+	color: inherit;
+	font-weight: 700;
+	padding: 0 0.08em;
+	border-radius: 1px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	html {
+		scroll-behavior: smooth;
+	}
+}

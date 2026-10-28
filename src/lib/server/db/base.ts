@@ -19,8 +19,10 @@ export function abrirBase(ruta: string): Base {
 export function migrar(db: Base): void {
 	const actual = db.pragma('user_version', { simple: true }) as number;
 	for (let version = actual; version < migraciones.length; version++) {
+		const migracion = migraciones[version];
 		db.transaction(() => {
-			db.exec(migraciones[version]);
+			if (typeof migracion === 'string') db.exec(migracion);
+			else migracion(db);
 			db.pragma(`user_version = ${version + 1}`);
 		})();
 	}
