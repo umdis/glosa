@@ -344,7 +344,10 @@ export function detectarDichas(
 		} else {
 			for (let k = j; k < Math.min(j + VENTANA_VERSICULO, textos.length); k++) {
 				const otro = k > j ? leerLibro(textos, k) : null;
-				if (otro && otro.nombre !== libro.nombre) break; // empezó otra referencia
+				// Empezó otra referencia: otro libro, o el mismo con un capítulo nuevo («Apocalipsis
+				// catorce, también Apocalipsis siete en el versículo tres»). El mismo libro nombrado
+				// sin número («…a los filipenses, por lo demás, versículo ocho») no corta.
+				if (otro && (otro.nombre !== libro.nombre || traeCapitulo(textos, otro.fin))) break;
 				if (!ANTES_DE_VERSICULO.test(textos[k])) continue;
 				const inicioNumero = saltarRelleno(textos, k + 1);
 				const numero = leerNumero(textos, inicioNumero);
@@ -398,6 +401,14 @@ export function detectarDichas(
 		i = j - 1;
 	}
 	return encontradas;
+}
+
+/** ¿Sigue un número de capítulo (con «capítulo» y relleno opcionales) a partir de `i`? */
+function traeCapitulo(textos: string[], i: number): boolean {
+	let j = i;
+	while (RELLENO.has(textos[j]) && j < i + 3) j++;
+	if (textos[j] === 'capitulo' || textos[j] === 'capitulos') j++;
+	return leerNumero(textos, j) !== null;
 }
 
 function saltarRelleno(textos: string[], i: number): number {

@@ -97,6 +97,17 @@ describe('detectarDichas', () => {
 		]);
 	});
 
+	it('caso real del 27-oct: el mismo libro con otro capítulo es otra cita', () => {
+		const refs = detectarDichas([
+			frag(
+				1,
+				3003,
+				'y sobre la mano que que está en Apocalipsis catorce también Apocalipsis siete en el versículo tres dice eh eh no hagáis daño'
+			)
+		]);
+		expect(formatos(refs)).toEqual(['Apocalipsis 14', 'Apocalipsis 7:3']);
+	});
+
 	it('«versículos dos y doce» son dos versículos, no un rango', () => {
 		const refs = detectarDichas([frag(1, 0, 'Santiago capítulo uno versículos dos y doce')]);
 		expect(formatos(refs)).toEqual(['Santiago 1:2']);
