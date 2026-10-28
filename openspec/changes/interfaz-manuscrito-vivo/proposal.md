@@ -47,5 +47,5 @@ Se conserva la dirección D12, «el manuscrito vivo», con la paleta y las fuent
 
 - Código: `src/lib/estilos/`, todas las rutas de `src/routes/`, `src/lib/componentes/`, `src/lib/server/medios/ffmpeg.ts`, `src/lib/server/biblia/indice.ts`, `src/lib/server/config.ts` y `src/env.ts`.
 - Una variable nueva: `SHOW_FRAMES` (opcional, activa por defecto).
-- Disco: los fotogramas se guardan junto a los medios de cada video y se borran con él.
+- Disco: los fotogramas se guardan junto a los medios de cada video (`<medios>/<id>/fotogramas/`). Hoy no existe borrar un video; cuando exista, debe borrar también esa carpeta.
 - Privacidad: los fotogramas pueden mostrar a la congregación. Solo se sirven de videos públicos y el propietario puede apagarlos.

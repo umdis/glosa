@@ -93,6 +93,49 @@ export async function normalizarVideo(
 	);
 }
 
+/**
+ * Argumentos para sacar un cuadro en JPEG. `-ss` antes de `-i` salta al fotograma clave sin
+ * decodificar lo anterior; mjpeg viene en cualquier ffmpeg, libwebp no siempre.
+ */
+export function argumentosFotograma(
+	entrada: string,
+	segundo: number,
+	ancho: number,
+	salida: string
+): string[] {
+	return [
+		'-v',
+		'error',
+		'-y',
+		'-ss',
+		String(segundo),
+		'-i',
+		entrada,
+		'-frames:v',
+		'1',
+		'-vf',
+		`scale=${ancho}:-2`,
+		'-q:v',
+		'4',
+		'-f',
+		'image2',
+		'-c:v',
+		'mjpeg',
+		salida
+	];
+}
+
+/** Un cuadro del video en `segundo`, escalado a `ancho` px. */
+export async function extraerFotograma(
+	rutas: RutasFfmpeg,
+	entrada: string,
+	segundo: number,
+	ancho: number,
+	salida: string
+): Promise<void> {
+	await ejecutar(rutas.ffmpeg, argumentosFotograma(entrada, segundo, ancho, salida));
+}
+
 /** Audio para transcribir: WAV PCM de 16 bits, mono, 24 kHz, sin metadatos. */
 export async function extraerAudio(
 	rutas: RutasFfmpeg,

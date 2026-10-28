@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { abrirBase } from '../db/base';
 import { guardarFragmentos, registrarVideo } from '../ingesta/pipeline';
-import { guardarPasajesDichos, guardarPasajesEnPantalla, indicePublico } from './indice';
+import {
+	guardarPasajesDichos,
+	guardarPasajesEnPantalla,
+	indicePublico,
+	pasajesDeVideo,
+	testamento
+} from './indice';
 import { detectarDichas } from './referencias';
 
 function preparar() {
@@ -59,5 +65,22 @@ describe('índice de pasajes', () => {
 			libro: 'Deuteronomio',
 			pasajes: [{ momentos: [{ origen: 'en_pantalla', fragmentoId: fragmentos[0].id }] }]
 		});
+	});
+});
+
+describe('pasajesDeVideo y testamento', () => {
+	it('lista los pasajes visibles de un video en orden, con su fragmento', () => {
+		const { db, fragmentos } = preparar();
+		guardarPasajesDichos(db, 'v1', detectarDichas(fragmentos));
+		db.prepare(`UPDATE fragmentos SET visibilidad = 'oculto' WHERE id = ?`).run(fragmentos[2].id);
+		const pasajes = pasajesDeVideo(db, 'v1');
+		expect(pasajes.map((p) => p.libro)).toEqual(['Santiago', 'Filipenses']);
+		expect(pasajes[0]).toMatchObject({ momentoMs: 356_000, fragmentoId: fragmentos[0].id });
+	});
+
+	it('Mateo abre el Nuevo Testamento', () => {
+		expect(testamento('Malaquías')).toBe('antiguo');
+		expect(testamento('Mateo')).toBe('nuevo');
+		expect(testamento('Apocalipsis')).toBe('nuevo');
 	});
 });

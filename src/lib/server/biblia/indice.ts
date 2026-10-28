@@ -110,3 +110,36 @@ export function indicePublico(db: Base): Array<{ libro: string; pasajes: PasajeI
 		.sort(([a], [b]) => (orden.get(a) ?? 99) - (orden.get(b) ?? 99))
 		.map(([libro, pasajes]) => ({ libro, pasajes: [...pasajes.values()] }));
 }
+
+/** Mateo abre el Nuevo Testamento: los 39 libros anteriores del canon son del Antiguo. */
+const PRIMERO_NUEVO = CANON.findIndex((l) => l.nombre === 'Mateo');
+
+export function testamento(libro: string): 'antiguo' | 'nuevo' {
+	const i = CANON.findIndex((l) => l.nombre === libro);
+	return i >= PRIMERO_NUEVO ? 'nuevo' : 'antiguo';
+}
+
+export interface PasajeDeVideo {
+	libro: string;
+	capitulo: number;
+	versiculoInicio: number | null;
+	versiculoFin: number | null;
+	momentoMs: number;
+	origen: 'dicho' | 'en_pantalla';
+	/** Fragmento junto al que va la glosa: el que sonaba en ese momento. */
+	fragmentoId: number | null;
+}
+
+/** Pasajes de un video en orden de aparición, con el mismo filtro de visibilidad que el índice. */
+export function pasajesDeVideo(db: Base, videoId: string): PasajeDeVideo[] {
+	return db
+		.prepare(
+			`SELECT p.libro, p.capitulo, p.versiculo_inicio AS versiculoInicio, p.versiculo_fin AS versiculoFin,
+				p.momento_ms AS momentoMs, p.origen, p.fragmento_id AS fragmentoId
+			 FROM pasajes p
+			 LEFT JOIN fragmentos f ON f.id = p.fragmento_id
+			 WHERE p.video_id = ? AND (p.origen = 'en_pantalla' OR f.visibilidad = 'visible')
+			 ORDER BY p.momento_ms, p.capitulo, p.versiculo_inicio`
+		)
+		.all(videoId) as PasajeDeVideo[];
+}

@@ -45,3 +45,22 @@ function recortarFin(texto: string, alcance: number): string {
 	const corte = texto.lastIndexOf(' ', alcance);
 	return texto.slice(0, corte === -1 ? alcance : corte) + '…';
 }
+
+interface Pasaje {
+	libro: string;
+	capitulo: number;
+	versiculoInicio: number | null;
+	versiculoFin: number | null;
+}
+
+/** «1:2», «6:6–9» o solo «6» cuando no se dijo el versículo. */
+export function capituloYVersiculo(p: Omit<Pasaje, 'libro'>): string {
+	if (p.versiculoInicio === null) return `${p.capitulo}`;
+	const fin = p.versiculoFin && p.versiculoFin !== p.versiculoInicio ? `–${p.versiculoFin}` : '';
+	return `${p.capitulo}:${p.versiculoInicio}${fin}`;
+}
+
+/** «Santiago 1:2». */
+export function referencia(p: Pasaje): string {
+	return `${p.libro} ${capituloYVersiculo(p)}`;
+}

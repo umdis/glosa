@@ -29,6 +29,6 @@ El sistema DEBE (MUST) guardar cada fotograma generado junto a los medios del vi
 - **WHEN** se pide dos veces el mismo fotograma
 - **THEN** la segunda respuesta sale del disco sin ejecutar ffmpeg
 
-#### Scenario: Borrar el video
-- **WHEN** el administrador borra un video
-- **THEN** sus fotogramas desaparecen con su carpeta de medios
+#### Scenario: ffmpeg falla
+- **WHEN** ffmpeg falla a mitad de la extracción
+- **THEN** no queda ningún archivo en la caché y la petición responde 404

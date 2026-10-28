@@ -1,5 +1,5 @@
 import { defineEnvVars } from '@sveltejs/kit/env';
-import { carpetaDatos, opcional, topeGastoDiario } from './lib/server/config';
+import { carpetaDatos, mostrarFotogramas, opcional, topeGastoDiario } from './lib/server/config';
 
 /** Variables de entorno del servidor (`$app/env/private`). Ninguna llega al navegador. */
 export const variables = defineEnvVars({
@@ -26,5 +26,9 @@ export const variables = defineEnvVars({
 	DAILY_SPEND_CAP_USD: {
 		schema: topeGastoDiario,
 		description: 'Tope de gasto diario de la demo, en dólares (5 por defecto).'
+	},
+	SHOW_FRAMES: {
+		schema: mostrarFotogramas,
+		description: 'Muestra fotogramas del video (activo por defecto; «false» los apaga).'
 	}
 });

@@ -12,6 +12,8 @@ export interface Config {
 	adminToken: string | undefined;
 	/** Tope de gasto diario de la demo, en dólares. */
 	topeGastoDiarioUsd: number;
+	/** Si se sirven fotogramas del video (pueden mostrar a la congregación). */
+	mostrarFotogramas: boolean;
 }
 
 type Fuente = Record<string, string | undefined>;
@@ -32,11 +34,17 @@ export function topeGastoDiario(valor: string | undefined): number {
 	return tope;
 }
 
+/** Activo por defecto; se apaga con `false`, `0`, `no` u `off`. */
+export function mostrarFotogramas(valor: string | undefined): boolean {
+	return !['false', '0', 'no', 'off'].includes((valor ?? '').trim().toLowerCase());
+}
+
 export function leerConfig(fuente: Fuente): Config {
 	return {
 		dataDir: carpetaDatos(fuente.DATA_DIR),
 		modelApiKey: opcional(fuente.MODEL_API_KEY),
 		adminToken: opcional(fuente.ADMIN_TOKEN),
-		topeGastoDiarioUsd: topeGastoDiario(fuente.DAILY_SPEND_CAP_USD)
+		topeGastoDiarioUsd: topeGastoDiario(fuente.DAILY_SPEND_CAP_USD),
+		mostrarFotogramas: mostrarFotogramas(fuente.SHOW_FRAMES)
 	};
 }

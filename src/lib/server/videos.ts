@@ -36,6 +36,17 @@ export function obtenerVideo(db: Base, id: string): VideoPublico | undefined {
 		.get(id) as VideoPublico | undefined;
 }
 
+/** Un video de la colección pública: reproducible y con transcripción visible. */
+export function videoPublico(db: Base, id: string): VideoPublico | undefined {
+	return db
+		.prepare(
+			`SELECT v.id, v.titulo, v.duracion_ms AS duracionMs, v.estado FROM videos v
+			 WHERE v.id = ? AND v.archivo_reproduccion IS NOT NULL
+			   AND EXISTS (SELECT 1 FROM fragmentos f WHERE f.video_id = v.id AND f.visibilidad = 'visible')`
+		)
+		.get(id) as VideoPublico | undefined;
+}
+
 /** Fragmentos visibles en orden. Los pendientes de revisión y los ocultos no salen. */
 export function fragmentosVisibles(db: Base, videoId: string): FragmentoPublico[] {
 	return db
