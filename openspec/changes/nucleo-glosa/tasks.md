@@ -2,10 +2,10 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 1. Base del proyecto (28-oct)
 
-- [ ] 1.1 ★ Crear la app SvelteKit (Svelte 5, TypeScript, `adapter-node`) con lint, formato y pruebas (Vitest)
-- [ ] 1.2 ★ Dockerfile con ffmpeg y volumen `/data`; `.env.example` con `MODEL_API_KEY`, `ADMIN_TOKEN`, `DAILY_SPEND_CAP_USD` (solo nombres)
-- [ ] 1.3 ★ Esquema SQLite: `videos`, `fragmentos` (+ tablas FTS5 `fragmentos_raices` y `fragmentos_trigramas`), `en_pantalla`, `pasajes`, `pendientes`, `gasto`; migración inicial y comprobación de que la versión de SQLite tiene el tokenizador `trigram`
-- [ ] 1.4 ★ Cliente de la Meta Model API (Responses, Files, ASR) con timeouts, reintentos con espera y registro del `usage` en `gasto`
+- [x] 1.1 ★ Crear la app SvelteKit (Svelte 5, TypeScript, `adapter-node`) con lint, formato y pruebas (Vitest)
+- [x] 1.2 ★ Dockerfile con ffmpeg y volumen `/data`; `.env.example` con `MODEL_API_KEY`, `ADMIN_TOKEN`, `DAILY_SPEND_CAP_USD` (solo nombres)
+- [x] 1.3 ★ Esquema SQLite: `videos`, `fragmentos` (+ tablas FTS5 `fragmentos_raices` y `fragmentos_trigramas`), `en_pantalla`, `pasajes`, `pendientes`, `gasto`; migración inicial y comprobación de que la versión de SQLite tiene el tokenizador `trigram`
+- [x] 1.4 ★ Cliente de la Meta Model API (Responses, Files, ASR) con timeouts, reintentos con espera y registro del `usage` en `gasto`
 
 ## 2. Ingesta y transcripción (28–29-oct)
 

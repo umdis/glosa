@@ -8,7 +8,7 @@ collection. Every answer links to the exact minute that supports it, and every c
 verified against the source before it reaches you.
 
 Built for the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon)
-(Indie Developer track · theme: *Build for Your World*) with Meta's models.
+(Indie Developer track · theme: _Build for Your World_) with Meta's models.
 
 > 🚧 Work in progress. Everything in this repository was built during the hackathon
 > (October 26 – November 4, 2026).

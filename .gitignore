@@ -37,3 +37,8 @@ Thumbs.db
 # Claude Code local
 CLAUDE.local.md
 .claude/settings.local.json
+
+# SvelteKit / Vite
+.output
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

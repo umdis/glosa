@@ -1,0 +1,14 @@
+.git
+node_modules
+build
+.svelte-kit
+data
+media
+.env
+.env.*
+!.env.example
+*.mp4
+*.wav
+CLAUDE.local.md
+.claude
+.vscode
