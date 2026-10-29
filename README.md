@@ -137,4 +137,4 @@ Built during the hackathon. The specification, design decisions and task list li
 
 ## License
 
-To be decided by the author before the submission.
+[MIT](LICENSE). The sermons used in the demo are not part of this license and are not in this repository.
