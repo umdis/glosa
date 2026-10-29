@@ -4,6 +4,7 @@
 	import { onNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { tick } from 'svelte';
 	import GuardarCita from '#lib/componentes/GuardarCita.svelte';
 	import type { CitaPorGuardar } from '#lib/investigaciones.js';
 	import type { LayoutProps } from './$types';
@@ -19,6 +20,7 @@
 	let citaPorGuardar = $state<CitaPorGuardar>();
 	let guardadaEn = $state<{ id: string; titulo: string }>();
 
+	/** Escucha en captura: el router de SvelteKit atiende los enlaces antes, en la burbuja. */
 	function abrirGuardar(evento: MouseEvent) {
 		if (evento.defaultPrevented || evento.button !== 0 || evento.ctrlKey || evento.metaKey) return;
 		const enlace = (evento.target as HTMLElement | null)?.closest<HTMLAnchorElement>(
@@ -35,7 +37,9 @@
 			frase: url.searchParams.get('q') ?? enlace.dataset.texto ?? '',
 			etiqueta: enlace.dataset.etiqueta ?? ''
 		};
-		dialogo.showModal();
+		// Abrir cuando el formulario ya está pintado, para que el foco caiga en su primer campo.
+		const abrir = dialogo;
+		tick().then(() => abrir.showModal());
 	}
 
 	function cerrarGuardar() {
@@ -83,7 +87,7 @@
 </svelte:head>
 
 <svelte:window onkeydown={atajo} />
-<svelte:document onclick={abrirGuardar} />
+<svelte:document onclickcapture={abrirGuardar} />
 
 <a class="saltar" href="#contenido">Skip to content</a>
 

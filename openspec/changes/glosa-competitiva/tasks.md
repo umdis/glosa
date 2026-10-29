@@ -3,20 +3,20 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 
 ## 0. Preparación
 
-- [ ] 0.1 ★ Copia de `glosa.db` del volumen a `/home/ubuntu/glosa-respaldos/` antes del primer deploy del cambio
-- [ ] 0.2 ★ Menú de acciones de cita accesible (botón + lista, Escape, foco) en Preguntar, búsqueda y video, con prueba de teclado
+- [x] 0.1 ★ Copia de `glosa.db` del volumen a `/home/ubuntu/glosa-respaldos/` antes del primer deploy del cambio
+- [x] 0.2 ★ Acción de cita accesible en Preguntar, búsqueda y video, con prueba de teclado — hecha como enlace «Save to investigation» que sin JS lleva a `/investigations/save` y con JS abre un `<dialog>` nativo (foco, Escape, vuelta del foco). Las acciones de las fases 2 y 4 se suman al mismo diálogo.
 
 ## 1. Investigaciones (29-oct)
 
-- [ ] 1.1 ★ Esquema `investigaciones` y `bloques` con migración, más funciones de acceso a datos y pruebas
-- [ ] 1.2 ★ Secreto de edición: generación, hash, cookie por investigación y guardas de edición/lectura, con pruebas
-- [ ] 1.3 ★ Página `/investigations` (crear, lista de las propias) y página de edición con bloques título/texto/cita/nota
-- [ ] 1.4 ★ Reordenar, editar y borrar bloques sin JavaScript obligatorio, con «Move up/down» y anuncio por `aria-live`
-- [ ] 1.5 ★ «Add to investigation» desde Preguntar, búsqueda y video; solo fragmentos visibles; citas retiradas
-- [ ] 1.6 ★ «Draft with Spark»: salida estructurada, verificación por fragmento del cuaderno, conteo de descartadas, marca IA
-- [ ] 1.7 ★ Publicar con enlace de lectura y exportar a Markdown y vista imprimible
-- [ ] 1.8 Exportar a Word (`docx`) con hipervínculos al minuto
-- [ ] 1.9 ★ Límites (por visitante, bloques, redacciones) y tope de gasto; despublicar desde `/admin`
+- [x] 1.1 ★ Esquema `investigaciones` y `bloques` con migración, más funciones de acceso a datos y pruebas
+- [x] 1.2 ★ Secreto de edición: generación, hash, cookie por investigación y guardas de edición/lectura, con pruebas
+- [x] 1.3 ★ Página `/investigations` (crear, lista de las propias) y página de edición con bloques título/texto/cita/nota
+- [x] 1.4 ★ Reordenar, editar y borrar bloques sin JavaScript obligatorio, con «Move up/down» y anuncio por `aria-live`
+- [x] 1.5 ★ «Add to investigation» desde Preguntar, búsqueda y video; solo fragmentos visibles; citas retiradas
+- [x] 1.6 ★ «Draft with Spark»: salida estructurada, verificación por fragmento del cuaderno, conteo de descartadas, marca IA
+- [x] 1.7 ★ Publicar con enlace de lectura y exportar a Markdown y vista imprimible
+- [x] 1.8 Exportar a Word (`docx`) con hipervínculos al minuto
+- [x] 1.9 ★ Límites (por visitante, bloques, redacciones) y tope de gasto; despublicar desde `/admin`
 - [ ] 1.10 ★ Despliegue y verificación en producción (crear, citar, redactar, exportar)
 
 ## 2. Clips para compartir (30-oct)
