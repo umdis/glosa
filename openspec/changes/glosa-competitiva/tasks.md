@@ -21,11 +21,11 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 
 ## 2. Clips para compartir (30-oct)
 
-- [ ] 2.1 ★ Cálculo de la ventana del clip (15–60 s, bordes de fragmentos visibles) con pruebas
-- [ ] 2.2 ★ Generación de subtítulos `.ass` desde fragmentos y fuente empaquetada en la imagen
-- [ ] 2.3 ★ Comando ffmpeg 9:16 (fondo difuminado, video, subtítulos, título, dirección) y caché en disco
-- [ ] 2.4 ★ Cola de uno en uno con deduplicación, límite de espera y límite por visitante
-- [ ] 2.5 ★ Página `/c/[fragmento]` con reproductor, frase, enlace al minuto y Open Graph
+- [x] 2.1 ★ Cálculo de la ventana del clip (15–60 s, bordes de fragmentos visibles) con pruebas
+- [x] 2.2 ★ Generación de subtítulos `.ass` desde fragmentos y fuente empaquetada en la imagen
+- [x] 2.3 ★ Comando ffmpeg 9:16 (fondo difuminado, video, subtítulos, título, dirección) y caché en disco
+- [x] 2.4 ★ Cola de uno en uno con deduplicación, límite de espera y límite por visitante
+- [x] 2.5 ★ Página `/c/[fragmento]` con reproductor, frase, enlace al minuto y Open Graph
 - [ ] 2.6 ★ Acción «Make a clip» con progreso accesible; despliegue y prueba real compartiendo el enlace
 
 ## 3. Cualquier idioma y voz (31-oct)

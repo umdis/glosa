@@ -45,8 +45,9 @@ export function argumentosClip(opciones: {
 		? `[0:v]split=2[a][b];` +
 			`[a]scale=${ANCHO}:${ALTO}:force_original_aspect_ratio=increase,crop=${ANCHO}:${ALTO},gblur=sigma=28,eq=brightness=-0.38:saturation=0.7[fondo];` +
 			`[b]scale=${ANCHO}:-2[frente];` +
-			`[fondo][frente]overlay=0:(H-h)/2${DESPLAZAMIENTO_VIDEO},${ass},format=yuv420p[v]`
-		: `[1:v]${ass},format=yuv420p[v]`;
+			// setsar=1: el escalado deja píxeles de 1280:1281 y el navegador lo mostraría a 1922 de alto.
+			`[fondo][frente]overlay=0:(H-h)/2${DESPLAZAMIENTO_VIDEO},${ass},setsar=1,format=yuv420p[v]`
+		: `[1:v]${ass},setsar=1,format=yuv420p[v]`;
 	const fondoLiso = opciones.conImagen
 		? []
 		: [
