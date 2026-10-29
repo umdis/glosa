@@ -162,7 +162,7 @@
 												)}"
 												data-guardar-cita
 												data-etiqueta="{cita.titulo}, {folio(cita.inicioMs)}"
-												>Save to investigation<span class="solo-lector">: «{cita.frase}»</span></a
+												>Save or share<span class="solo-lector">: «{cita.frase}»</span></a
 											>
 										</p>
 									{:else}

@@ -160,31 +160,39 @@
 	aria-labelledby="t-guardar"
 	onclose={() => (citaPorGuardar = undefined)}
 >
-	<h2 id="t-guardar">Save to an investigation</h2>
-	{#if guardadaEn}
-		<p role="status">
-			Saved to <a href={resolve('/investigations/[id]', { id: guardadaEn.id })}
-				>{guardadaEn.titulo}</a
-			>.
-		</p>
-		<div class="acciones-dialogo">
-			<a
-				class="boton"
-				bind:this={abrirGuardada}
-				href={resolve('/investigations/[id]', { id: guardadaEn.id })}>Open the investigation</a
+	<h2 id="t-guardar">Use this quote</h2>
+	{#if citaPorGuardar}
+		{#if guardadaEn}
+			<p role="status">
+				Saved to <a href={resolve('/investigations/[id]', { id: guardadaEn.id })}
+					>{guardadaEn.titulo}</a
+				>.
+			</p>
+			<div class="acciones-dialogo">
+				<a
+					class="boton"
+					bind:this={abrirGuardada}
+					href={resolve('/investigations/[id]', { id: guardadaEn.id })}>Open the investigation</a
+				>
+				<button type="button" class="secundario" onclick={cerrarGuardar}>Keep reading</button>
+			</div>
+		{:else}
+			{#key citaPorGuardar}
+				<GuardarCita
+					cita={citaPorGuardar}
+					investigaciones={data.misInvestigaciones}
+					enDialogo
+					alGuardar={(g) => (guardadaEn = g)}
+					alCancelar={cerrarGuardar}
+				/>
+			{/key}
+		{/if}
+		<p class="compartir">
+			Or share it as a short vertical video with subtitles:
+			<a href={resolve('/c/[fragmento]', { fragmento: String(citaPorGuardar.fragmentoId) })}
+				>Make a clip</a
 			>
-			<button type="button" class="secundario" onclick={cerrarGuardar}>Keep reading</button>
-		</div>
-	{:else if citaPorGuardar}
-		{#key citaPorGuardar}
-			<GuardarCita
-				cita={citaPorGuardar}
-				investigaciones={data.misInvestigaciones}
-				enDialogo
-				alGuardar={(g) => (guardadaEn = g)}
-				alCancelar={cerrarGuardar}
-			/>
-		{/key}
+		</p>
 	{/if}
 </dialog>
 
@@ -308,6 +316,15 @@
 		margin: 0 0 var(--e-4);
 		font-size: var(--t-3);
 		font-style: italic;
+	}
+
+	.compartir {
+		margin: var(--e-6) 0 0;
+		padding-top: var(--e-4);
+		border-top: 1px solid var(--linea);
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-0);
+		color: var(--suave);
 	}
 
 	.acciones-dialogo {

@@ -34,6 +34,8 @@ ENV NODE_ENV=production \
 COPY --from=build /app/build ./build
 COPY --from=build /app/node_modules ./node_modules
 COPY package.json ./
+# Alegreya Sans en TTF (OFL) para los subtítulos de los clips: libass no lee WOFF.
+COPY fuentes ./fuentes
 RUN mkdir -p /data && chown node:node /data
 USER node
 VOLUME /data

@@ -4,8 +4,11 @@ import {
 	DATA_DIR,
 	FFMPEG_PATH,
 	FFPROBE_PATH,
-	MODEL_API_KEY
+	MODEL_API_KEY,
+	SHOW_FRAMES
 } from '$app/env/private';
+import { folio } from '../formato';
+import { crearCola, generarClip, type ClipPedido } from './clips/generar';
 import { gastoDelDia } from './db/gasto';
 import { abrirBase, type Base } from './db/base';
 import { registroGastoSqlite } from './db/gasto';
@@ -27,9 +30,17 @@ interface Servicios {
 	encolarProcesamiento(videoId: string): void;
 	/** Si el gasto del día ya alcanzó el tope de la demo (design.md D10). */
 	topeAlcanzado(): boolean;
+	/**
+	 * Genera (o devuelve de la caché) el clip vertical de una cita. De uno en uno y con un máximo
+	 * de tres esperando: ffmpeg comparte el servidor con otras apps (glosa-competitiva D5).
+	 */
+	clip(pedido: ClipPedido): Promise<string>;
 }
 
 let servicios: Servicios | undefined;
+
+/** Fuentes TTF de los subtítulos de los clips, junto a la app (en la imagen, /app/fuentes). */
+const CARPETA_FUENTES = join(process.cwd(), 'fuentes');
 
 export function obtenerServicios(): Servicios {
 	if (!servicios) {
@@ -55,7 +66,22 @@ export function obtenerServicios(): Servicios {
 
 		const topeAlcanzado = () => gastoDelDia(db) >= DAILY_SPEND_CAP_USD;
 
-		servicios = { ...deps, meta, encolarProcesamiento, topeAlcanzado };
+		const colaClips = crearCola(3);
+		const clip = (pedido: ClipPedido) =>
+			colaClips.encolar(pedido.archivo, () =>
+				generarClip(
+					{
+						ffmpeg: FFMPEG_PATH,
+						carpetaMedios: deps.carpetaMedios,
+						fuentes: CARPETA_FUENTES,
+						conImagen: SHOW_FRAMES,
+						pie: (p) => `glosa.umdis.site · ¶ ${folio(p.ventana.citado.inicioMs)}`
+					},
+					pedido
+				)
+			);
+
+		servicios = { ...deps, meta, encolarProcesamiento, topeAlcanzado, clip };
 	}
 	return servicios;
 }

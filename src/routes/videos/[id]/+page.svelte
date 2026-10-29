@@ -262,7 +262,7 @@
 					data-guardar-cita
 					data-texto={pasajeParaGuardar.texto}
 					data-etiqueta="{data.video.titulo}, {folio(pasajeParaGuardar.inicioMs)}"
-					>Save the passage at ¶ {folio(pasajeParaGuardar.inicioMs)}</a
+					>Save or share the passage at ¶ {folio(pasajeParaGuardar.inicioMs)}</a
 				>
 			{/if}
 		</div>
