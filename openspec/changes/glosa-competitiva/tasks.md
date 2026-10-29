@@ -26,7 +26,7 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 - [x] 2.3 ★ Comando ffmpeg 9:16 (fondo difuminado, video, subtítulos, título, dirección) y caché en disco
 - [x] 2.4 ★ Cola de uno en uno con deduplicación, límite de espera y límite por visitante
 - [x] 2.5 ★ Página `/c/[fragmento]` con reproductor, frase, enlace al minuto y Open Graph
-- [ ] 2.6 ★ Acción «Make a clip» con progreso accesible; despliegue y prueba real compartiendo el enlace
+- [x] 2.6 ★ Acción «Make a clip» con progreso accesible; despliegue y prueba real compartiendo el enlace
 
 ## 3. Cualquier idioma y voz (31-oct)
 
