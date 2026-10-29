@@ -17,7 +17,7 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 - [x] 1.7 ★ Publicar con enlace de lectura y exportar a Markdown y vista imprimible
 - [x] 1.8 Exportar a Word (`docx`) con hipervínculos al minuto
 - [x] 1.9 ★ Límites (por visitante, bloques, redacciones) y tope de gasto; despublicar desde `/admin`
-- [ ] 1.10 ★ Despliegue y verificación en producción (crear, citar, redactar, exportar)
+- [x] 1.10 ★ Despliegue y verificación en producción (crear, citar, redactar, exportar)
 
 ## 2. Clips para compartir (30-oct)
 
