@@ -10,10 +10,10 @@ import {
 
 function cookiesFalsas(inicial?: string) {
 	const almacen = new Map<string, string>(inicial ? [[COOKIE_CUADERNOS, inicial]] : []);
-	const opciones: Array<Record<string, unknown>> = [];
+	const opciones: unknown[] = [];
 	return {
 		get: (nombre: string) => almacen.get(nombre),
-		set: (nombre: string, valor: string, o: Record<string, unknown>) => {
+		set: (nombre: string, valor: string, o?: unknown) => {
 			almacen.set(nombre, valor);
 			opciones.push(o);
 		},

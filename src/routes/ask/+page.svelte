@@ -5,6 +5,7 @@
 	import Estudio from '#lib/componentes/Estudio.svelte';
 	import Fotograma from '#lib/componentes/Fotograma.svelte';
 	import { folio } from '#lib/formato.js';
+	import { consultaGuardar } from '#lib/investigaciones.js';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -150,6 +151,18 @@
 											Verified in
 											<a class="folio" href={enlace(cita.videoId, cita.fragmentoId, cita.inicioMs)}
 												><span lang="es">{cita.titulo}</span>, ¶ {folio(cita.inicioMs)}</a
+											>
+										</p>
+										<p class="acciones-cita">
+											<a
+												class="guardar"
+												href="{resolve('/investigations/save')}{consultaGuardar(
+													cita.fragmentoId,
+													cita.frase
+												)}"
+												data-guardar-cita
+												data-etiqueta="{cita.titulo}, {folio(cita.inicioMs)}"
+												>Save to investigation<span class="solo-lector">: «{cita.frase}»</span></a
 											>
 										</p>
 									{:else}
@@ -353,6 +366,21 @@
 	.fuente .folio {
 		font-size: var(--t-1);
 		white-space: normal;
+	}
+
+	.acciones-cita {
+		grid-column: 2;
+		margin: var(--e-1) 0 0;
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-0);
+	}
+
+	/* Objetivo táctil de 24 px como mínimo (WCAG 2.5.8), aunque se lea como enlace. */
+	.guardar {
+		display: inline-flex;
+		align-items: center;
+		min-height: 1.75rem;
+		color: var(--suave);
 	}
 
 	.sello {

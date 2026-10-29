@@ -4,14 +4,55 @@
 	import { onNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import GuardarCita from '#lib/componentes/GuardarCita.svelte';
+	import type { CitaPorGuardar } from '#lib/investigaciones.js';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { children, data }: LayoutProps = $props();
+
+	/*
+	 * «Save to investigation»: cada cita lleva un enlace a /investigations/save (sirve sin
+	 * JavaScript). Con JavaScript, el enlace abre este diálogo nativo, que atrapa el foco, se cierra
+	 * con Escape y devuelve el foco al enlace que lo abrió.
+	 */
+	let dialogo = $state<HTMLDialogElement>();
+	let citaPorGuardar = $state<CitaPorGuardar>();
+	let guardadaEn = $state<{ id: string; titulo: string }>();
+
+	function abrirGuardar(evento: MouseEvent) {
+		if (evento.defaultPrevented || evento.button !== 0 || evento.ctrlKey || evento.metaKey) return;
+		const enlace = (evento.target as HTMLElement | null)?.closest<HTMLAnchorElement>(
+			'a[data-guardar-cita]'
+		);
+		if (!enlace || !dialogo) return;
+		const url = new URL(enlace.href);
+		const fragmentoId = Number(url.searchParams.get('f'));
+		if (!Number.isInteger(fragmentoId)) return;
+		evento.preventDefault();
+		guardadaEn = undefined;
+		citaPorGuardar = {
+			fragmentoId,
+			frase: url.searchParams.get('q') ?? enlace.dataset.texto ?? '',
+			etiqueta: enlace.dataset.etiqueta ?? ''
+		};
+		dialogo.showModal();
+	}
+
+	function cerrarGuardar() {
+		dialogo?.close();
+	}
+
+	// Al guardar, el formulario desaparece: el foco pasa al enlace de la investigación.
+	let abrirGuardada = $state<HTMLAnchorElement>();
+	$effect(() => {
+		if (guardadaEn) abrirGuardada?.focus();
+	});
 
 	const enPortada = $derived(page.url.pathname === '/');
 
 	/** Transición entre páginas donde el navegador la tenga y nadie haya pedido menos movimiento. */
 	onNavigate((navegacion) => {
+		dialogo?.close();
 		if (!document.startViewTransition) return;
 		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 		return new Promise((listo) => {
@@ -42,6 +83,7 @@
 </svelte:head>
 
 <svelte:window onkeydown={atajo} />
+<svelte:document onclick={abrirGuardar} />
 
 <a class="saltar" href="#contenido">Skip to content</a>
 
@@ -93,12 +135,54 @@
 			href={resolve('/passages')}
 			aria-current={page.url.pathname === '/passages' ? 'page' : undefined}>Scripture index</a
 		>
+		<a
+			class="chip"
+			href={resolve('/investigations')}
+			aria-current={page.url.pathname.startsWith('/investigations') ? 'page' : undefined}
+			>Investigations{#if data.misInvestigaciones.length}<span class="cuenta"
+					><span class="solo-lector">, </span>{data.misInvestigaciones.length}</span
+				>{/if}</a
+		>
 	</nav>
 </header>
 
 <main id="contenido" tabindex="-1">
 	{@render children()}
 </main>
+
+<dialog
+	bind:this={dialogo}
+	class="dialogo-guardar tarjeta"
+	aria-labelledby="t-guardar"
+	onclose={() => (citaPorGuardar = undefined)}
+>
+	<h2 id="t-guardar">Save to an investigation</h2>
+	{#if guardadaEn}
+		<p role="status">
+			Saved to <a href={resolve('/investigations/[id]', { id: guardadaEn.id })}
+				>{guardadaEn.titulo}</a
+			>.
+		</p>
+		<div class="acciones-dialogo">
+			<a
+				class="boton"
+				bind:this={abrirGuardada}
+				href={resolve('/investigations/[id]', { id: guardadaEn.id })}>Open the investigation</a
+			>
+			<button type="button" class="secundario" onclick={cerrarGuardar}>Keep reading</button>
+		</div>
+	{:else if citaPorGuardar}
+		{#key citaPorGuardar}
+			<GuardarCita
+				cita={citaPorGuardar}
+				investigaciones={data.misInvestigaciones}
+				enDialogo
+				alGuardar={(g) => (guardadaEn = g)}
+				alCancelar={cerrarGuardar}
+			/>
+		{/key}
+	{/if}
+</dialog>
 
 <style>
 	.saltar {
@@ -193,9 +277,48 @@
 		}
 	}
 
+	/* Cuántas investigaciones tiene este navegador: un número discreto junto al nombre. */
+	.cuenta {
+		margin-left: 0.4rem;
+		padding: 0 0.45rem;
+		border-radius: 999px;
+		background: var(--papel);
+		color: var(--tinta);
+		font-size: var(--t-0);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.dialogo-guardar {
+		width: min(34rem, calc(100vw - 2 * var(--margen)));
+		max-height: calc(100dvh - 2 * var(--margen));
+		padding: var(--e-6);
+		color: var(--tinta);
+		overflow: auto;
+	}
+
+	.dialogo-guardar::backdrop {
+		background: color-mix(in srgb, var(--tinta) 45%, transparent);
+	}
+
+	.dialogo-guardar h2 {
+		margin: 0 0 var(--e-4);
+		font-size: var(--t-3);
+		font-style: italic;
+	}
+
+	.acciones-dialogo {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--e-2);
+		margin-top: var(--e-4);
+	}
+
 	@media (forced-colors: active) {
 		.cabecera {
 			background: Canvas;
+		}
+		.dialogo-guardar {
+			border: 1px solid CanvasText;
 		}
 	}
 </style>

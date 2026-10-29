@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Fotograma from '#lib/componentes/Fotograma.svelte';
 	import { contiene, duracion, folio, resaltar } from '#lib/formato.js';
+	import { consultaGuardar } from '#lib/investigaciones.js';
 	import { replaceState } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -136,6 +137,16 @@
 	const coincidenciaActual = $derived(
 		coincidencias.length ? data.fragmentos[coincidencias[posicion]]?.id : undefined
 	);
+
+	/**
+	 * Lo que «Save this passage» guarda: la coincidencia que se está viendo o, si no se busca nada,
+	 * lo que suena. Un solo botón en las herramientas, en vez de uno por fragmento en la transcripción.
+	 */
+	const pasajeParaGuardar = $derived(
+		(coincidencias.length
+			? data.fragmentos[coincidencias[posicion]]
+			: data.fragmentos[Math.max(actual, 0)]) ?? undefined
+	);
 </script>
 
 <svelte:head>
@@ -244,6 +255,16 @@
 				</div>
 				<p id="estado-busqueda" class="estado" role="status">{estadoBusqueda}</p>
 			</form>
+			{#if pasajeParaGuardar}
+				<a
+					class="boton secundario guardar-pasaje"
+					href="{resolve('/investigations/save')}{consultaGuardar(pasajeParaGuardar.id)}"
+					data-guardar-cita
+					data-texto={pasajeParaGuardar.texto}
+					data-etiqueta="{data.video.titulo}, {folio(pasajeParaGuardar.inicioMs)}"
+					>Save the passage at ¶ {folio(pasajeParaGuardar.inicioMs)}</a
+				>
+			{/if}
 		</div>
 
 		{#if data.ficha.temas.length || data.pasajes.length}
@@ -451,6 +472,11 @@
 	.buscar-video label {
 		display: block;
 		margin-bottom: var(--e-1);
+	}
+
+	.guardar-pasaje {
+		justify-self: start;
+		margin-top: var(--e-1);
 	}
 
 	.buscar-video .fila {

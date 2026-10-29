@@ -3,6 +3,7 @@ import { timingSafeEqual, createHash } from 'node:crypto';
 import { ADMIN_TOKEN } from '$app/env/private';
 import { COOKIE_ADMIN, esAdmin, valorSesion } from '#lib/server/acceso.js';
 import { segundoPoster } from '#lib/server/fotogramas.js';
+import { listarPublicadas, retirar } from '#lib/server/investigaciones/datos.js';
 import { decidir, listarPendientes, type Decision } from '#lib/server/revision/decisiones.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -40,6 +41,7 @@ export const load: PageServerLoad = ({ request, cookies }) => {
 			pasos: pasos.filter((p) => p.videoId === v.id)
 		})),
 		pendientes: listarPendientes(db),
+		publicadas: listarPublicadas(db),
 		gastoHoy,
 		topeAlcanzado: topeAlcanzado()
 	};
@@ -98,5 +100,13 @@ export const actions: Actions = {
 		db.prepare(`UPDATE videos SET estado = 'procesando' WHERE id = ?`).run(videoId);
 		encolarProcesamiento(videoId);
 		return { reintentado: videoId };
+	},
+
+	/** Retira una investigación publicada por un visitante (spec investigaciones: límites). */
+	retirar: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const id = String((await request.formData()).get('id') ?? '');
+		retirar(obtenerServicios().db, id);
+		return { retirada: id };
 	}
 };

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Fotograma from '#lib/componentes/Fotograma.svelte';
 	import { concordancia, folio } from '#lib/formato.js';
+	import { consultaGuardar } from '#lib/investigaciones.js';
 	import { resolve } from '$app/paths';
 	import type { PageProps } from './$types';
 
@@ -107,6 +108,17 @@
 							<span class="antes">{c.antes}</span>
 							<span class="despues"
 								>{#if c.clave}<mark>{c.clave}</mark>{/if}{c.despues}</span
+							>
+							<a
+								class="guardar"
+								href="{resolve('/investigations/save')}{consultaGuardar(m.fragmentoId)}"
+								data-guardar-cita
+								data-texto={m.texto}
+								data-etiqueta="{grupo.titulo}, {folio(m.inicioMs)}"
+								lang="en"
+								>Save<span class="solo-lector">
+									the passage at {folio(m.inicioMs)} to an investigation</span
+								></a
 							>
 						</li>
 					{/each}
@@ -219,7 +231,7 @@
 	 */
 	.concordancia {
 		display: grid;
-		grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.15fr);
+		grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.15fr) auto;
 		margin: 0;
 		padding: var(--e-2) var(--e-4);
 		list-style: none;
@@ -246,6 +258,17 @@
 
 	.concordancia .folio:hover {
 		text-decoration: underline;
+	}
+
+	/* «Save» discreto al final de la línea; 24 px de alto como mínimo para el dedo (WCAG 2.5.8). */
+	.guardar {
+		display: inline-flex;
+		align-items: center;
+		min-height: 1.5rem;
+		padding: 0 0.4rem;
+		color: var(--suave);
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-0);
 	}
 
 	.antes,

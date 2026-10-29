@@ -332,6 +332,32 @@
 						</ul>
 					{/if}
 				</section>
+
+				<section aria-labelledby="t-publicadas">
+					<h2 id="t-publicadas">Published investigations</h2>
+					<p class="nota">
+						Visitors can publish what they write. Unpublishing removes the read link; its author
+						cannot publish it again.
+					</p>
+					{#if data.publicadas.length === 0}
+						<p class="nota">None published.</p>
+					{:else}
+						<ul class="publicadas">
+							{#each data.publicadas as inv (inv.id)}
+								<li>
+									<a href={resolve('/investigations/[id]', { id: inv.id })}>{inv.titulo}</a>
+									<span class="nota">{inv.bloques} blocks</span>
+									<form method="post" action="?/retirar" use:enhance>
+										<input type="hidden" name="id" value={inv.id} />
+										<button type="submit" class="secundario"
+											>Unpublish<span class="solo-lector"> {inv.titulo}</span></button
+										>
+									</form>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</section>
 			</div>
 		</div>
 	{/if}
@@ -365,6 +391,26 @@
 		font-family: var(--letra-interfaz);
 		max-width: var(--medida);
 		margin: var(--e-2) 0 0;
+	}
+
+	.publicadas {
+		display: grid;
+		gap: var(--e-3);
+		margin: var(--e-4) 0 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--letra-interfaz);
+	}
+
+	.publicadas li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--e-2) var(--e-4);
+	}
+
+	.publicadas .nota {
+		margin: 0;
 	}
 
 	label {
