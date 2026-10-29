@@ -194,5 +194,36 @@ export const migraciones: Migracion[] = [
 		resultado TEXT NOT NULL,
 		guardada_en TEXT NOT NULL DEFAULT (datetime('now'))
 	);
+	`,
+
+	/*
+	 * 4 — investigaciones (spec investigaciones; design.md D1–D2 de glosa-competitiva). Sin cuentas:
+	 * se edita con un secreto del que solo se guarda el resumen. Las citas guardan el fragmento y la
+	 * frase verificada; si el fragmento deja de ser visible (o se borra el video), la cita se muestra
+	 * retirada.
+	 */ `
+	CREATE TABLE investigaciones (
+		id TEXT PRIMARY KEY,
+		titulo TEXT NOT NULL,
+		secreto_hash TEXT NOT NULL,
+		publicada INTEGER NOT NULL DEFAULT 0 CHECK (publicada IN (0, 1)),
+		-- El editor puede retirar una publicada; su autor ya no puede volver a publicarla.
+		retirada INTEGER NOT NULL DEFAULT 0 CHECK (retirada IN (0, 1)),
+		creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+		actualizada_en TEXT NOT NULL DEFAULT (datetime('now'))
+	);
+
+	CREATE TABLE bloques (
+		id INTEGER PRIMARY KEY,
+		investigacion_id TEXT NOT NULL REFERENCES investigaciones(id) ON DELETE CASCADE,
+		orden INTEGER NOT NULL,
+		tipo TEXT NOT NULL CHECK (tipo IN ('titulo', 'texto', 'cita', 'nota')),
+		texto TEXT NOT NULL DEFAULT '',
+		fragmento_id INTEGER REFERENCES fragmentos(id) ON DELETE SET NULL,
+		-- Redactado por Muse Spark («Draft with Spark»); la interfaz lo marca.
+		origen_ia INTEGER NOT NULL DEFAULT 0 CHECK (origen_ia IN (0, 1)),
+		creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+	);
+	CREATE INDEX bloques_investigacion ON bloques (investigacion_id, orden);
 	`
 ];
