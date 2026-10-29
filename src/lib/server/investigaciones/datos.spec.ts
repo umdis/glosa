@@ -109,6 +109,34 @@ describe('citas', () => {
 		expect(() => anadirCita(db, id, fragmentos[0], '')).toThrow(ErrorInvestigacion);
 	});
 
+	it('rechaza una frase que no se dijo en ese fragmento', () => {
+		const { id } = crearInvestigacion(db, 'Citas');
+		expect(() =>
+			anadirCita(db, id, fragmentos[0], 'el divorcio es la mejor solución para todos')
+		).toThrow('does not match');
+		expect(bloquesDe(db, id)).toEqual([]);
+	});
+
+	it('una frase que empieza en el fragmento vecino toma el minuto del vecino', () => {
+		const { id } = crearInvestigacion(db, 'Citas');
+		anadirCita(db, id, fragmentos[0], 'El perdón empieza en la casa, en la mesa');
+		const [b] = bloquesDe(db, id);
+		expect(b.tipo === 'cita' && b.cita).toMatchObject({
+			fragmentoId: fragmentos[1],
+			inicioMs: 10_000
+		});
+	});
+
+	it('la IA puede repetir una cita que ya está; una persona no', () => {
+		const { id } = crearInvestigacion(db, 'Citas');
+		anadirCita(db, id, fragmentos[1], 'El perdón empieza en la casa');
+		expect(() => anadirCita(db, id, fragmentos[1], 'El perdón empieza en la casa')).toThrow(
+			ErrorInvestigacion
+		);
+		anadirCita(db, id, fragmentos[1], 'El perdón empieza en la casa', true);
+		expect(bloquesDe(db, id)).toHaveLength(2);
+	});
+
 	it('no acepta fragmentos ocultos ni pendientes', () => {
 		const { id } = crearInvestigacion(db, 'Citas');
 		db.prepare(`UPDATE fragmentos SET visibilidad = 'pendiente' WHERE id = ?`).run(fragmentos[0]);

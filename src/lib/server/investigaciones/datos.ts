@@ -1,5 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Base } from '../db/base';
+import { crearVerificador } from '../verificacion/verificar';
 
 /**
  * Investigaciones (spec investigaciones; design.md D1–D2 de glosa-competitiva): un cuaderno de
@@ -224,8 +225,10 @@ export function anadirTexto(
 }
 
 /**
- * Añade una cita al final. Solo admite fragmentos visibles de videos publicados, y la frase debe
- * estar dentro del texto del fragmento: quien llama ya la verificó o es el fragmento entero.
+ * Añade una cita al final. Solo admite fragmentos visibles de videos publicados. La frase viene de
+ * un formulario, así que se vuelve a verificar contra la transcripción: nadie puede guardar como
+ * cita algo que no se dijo. Sin frase, la cita es el fragmento entero. La IA puede repetir una
+ * cita que ya está (un borrador las ordena de nuevo); una persona, no.
  */
 export function anadirCita(
 	db: Base,
@@ -235,19 +238,31 @@ export function anadirCita(
 	origenIa = false
 ): number {
 	exigirCupo(db, id);
-	const fragmento = db
-		.prepare(
-			`SELECT f.texto FROM fragmentos f JOIN videos v ON v.id = f.video_id
-			 WHERE f.id = ? AND f.visibilidad = 'visible' AND v.archivo_reproduccion IS NOT NULL`
-		)
-		.get(fragmentoId) as { texto: string } | undefined;
+	const buscar = db.prepare(
+		`SELECT f.texto FROM fragmentos f JOIN videos v ON v.id = f.video_id
+		 WHERE f.id = ? AND f.visibilidad = 'visible' AND v.archivo_reproduccion IS NOT NULL`
+	);
+	const fragmento = buscar.get(fragmentoId) as { texto: string } | undefined;
 	if (!fragmento) throw new ErrorInvestigacion('That quote is no longer available.');
-	const texto = frase.trim() || fragmento.texto;
-	if (texto.length > LIMITES.texto) throw new ErrorInvestigacion('That quote is too long.');
-	const repetida = db
-		.prepare(`SELECT 1 FROM bloques WHERE investigacion_id = ? AND fragmento_id = ? AND texto = ?`)
-		.get(id, fragmentoId, texto);
-	if (repetida) throw new ErrorInvestigacion('That quote is already in this investigation.');
+	let texto = frase.replace(/\s+/g, ' ').trim();
+	if (texto) {
+		if (texto.length > LIMITES.texto) throw new ErrorInvestigacion('That quote is too long.');
+		const verificada = crearVerificador(db)({ fragmentoId, frase: texto });
+		if (verificada.estado !== 'verificada')
+			throw new ErrorInvestigacion('That quote does not match the transcript.');
+		// El minuto es el del fragmento donde empieza la frase, que puede ser el vecino.
+		fragmentoId = verificada.fragmentoId;
+	} else {
+		texto = fragmento.texto;
+	}
+	if (!origenIa) {
+		const repetida = db
+			.prepare(
+				`SELECT 1 FROM bloques WHERE investigacion_id = ? AND fragmento_id = ? AND texto = ?`
+			)
+			.get(id, fragmentoId, texto);
+		if (repetida) throw new ErrorInvestigacion('That quote is already in this investigation.');
+	}
 	const { lastInsertRowid } = db
 		.prepare(
 			`INSERT INTO bloques (investigacion_id, orden, tipo, texto, fragmento_id, origen_ia)
