@@ -75,11 +75,11 @@ Leyenda: ★ = imprescindible para la demo. Lo que no lleva ★ se recorta prime
 
 ## 11. Despliegue y entrega (2–3-nov)
 
-- [ ] 11.1 ★ Remoto público en GitHub y primer push (requiere el usuario de GitHub del propietario)
-- [ ] 11.2 ★ App en Dokploy con volumen y variables; registro DNS `glosa.umdis.site` (aprobación explícita del propietario)
+- [x] 11.1 ★ Remoto público en GitHub y primer push (requiere el usuario de GitHub del propietario)
+- [x] 11.2 ★ App en Dokploy con volumen y variables; registro DNS `glosa.umdis.site` (aprobación explícita del propietario)
 - [ ] 11.3 ★ Colección de demo indexada (solo videos con permiso) y revisión de sus pendientes
 - [x] 11.4 ★ README en inglés: qué hace, cómo usa los modelos de Meta, arquitectura, cómo correrlo y qué se construyó durante el hackatón
 - [ ] 11.5 ★ Guion y grabación del video de 3 min (en inglés o con subtítulos) mostrando solo lo construido en el hackatón
 - [x] 11.6 ★ Textos del formulario de entrega (uso de productos de Meta, por qué importan, comentarios) y entrega el 3-nov
 - [ ] 11.7 Publicación en X con la demo para el premio «Most Viral» (si el propietario abre la cuenta)
-- [ ] 11.8 ★ Actualizar `D:\Proyectos\Agent\projects\Glosa.md` con stack, infraestructura, variables (nombres) y runbook
+- [x] 11.8 ★ Actualizar `D:\Proyectos\Agent\projects\Glosa.md` con stack, infraestructura, variables (nombres) y runbook
