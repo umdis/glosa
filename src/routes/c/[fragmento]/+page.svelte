@@ -20,10 +20,17 @@
 			id: data.video.id
 		})
 	);
-	const imagen = $derived(
-		`${data.origen}${resolve('/videos/[id]/fotograma/[segundo]', { id: data.video.id, segundo: String(Math.floor(data.inicioMs / 1000)) })}?w=640`
-	);
 	const estaPagina = $derived(`${data.origen}${page.url.pathname}`);
+	/**
+	 * Open Graph exige direcciones absolutas, y `resolve` las da relativas en el servidor
+	 * («../videos/…»): se resuelven contra la dirección de esta página.
+	 */
+	const absoluta = (ruta: string) => new URL(ruta, estaPagina).href;
+	const imagen = $derived(
+		absoluta(
+			`${resolve('/videos/[id]/fotograma/[segundo]', { id: data.video.id, segundo: String(Math.floor(data.inicioMs / 1000)) })}?w=640`
+		)
+	);
 	const resumen = $derived(
 		data.frase.length > 180 ? `${data.frase.slice(0, 177).trimEnd()}…` : data.frase
 	);
@@ -48,7 +55,7 @@
 		<meta property="og:image" content={imagen} />
 	{/if}
 	{#if listo}
-		<meta property="og:video" content="{data.origen}{archivo}" />
+		<meta property="og:video" content={absoluta(archivo)} />
 		<meta property="og:video:type" content="video/mp4" />
 		<meta property="og:video:width" content="1080" />
 		<meta property="og:video:height" content="1920" />
