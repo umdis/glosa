@@ -35,7 +35,7 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 - [x] 3.3 Subtítulos en inglés por video desde `/admin` y pista `captions.vtt?lang=en`
 - [x] 3.4 ★ Grabación en el navegador → WAV 16 kHz mono (≤30 s), estados accesibles, sin envío automático
 - [x] 3.5 ★ `POST /api/voz` con validación del WAV, Voice Transcribe, límites y gasto
-- [ ] 3.6 ★ Despliegue y prueba real (pregunta en inglés hablada)
+- [x] 3.6 ★ Despliegue y prueba real (pregunta en inglés hablada) — 2fabc69 en producción: voz exacta en 1,7 s, 9/9 citas verificadas y traducidas; subtítulos en inglés los lanza el editor desde /admin
 
 ## 4. Láminas con Muse Image (1-nov)
 
@@ -43,7 +43,7 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 - [x] 4.2 ★ Composición (ilustración, frase, fuente, QR, mención) → PNG y prueba de la imagen resultante — con ffmpeg + ASS + Alegreya Sans, como los clips, en vez de resvg: el servidor es ARM y así no entra un binario nativo nuevo. QR con qrcode-generator (MIT, sin dependencias) a tamaño nativo; verificado decodificándolo con jsQR.
 - [x] 4.3 ★ «Make a card» para citas, caché y gasto
 - [ ] 4.4 Portada de investigación publicada y `og:image`
-- [ ] 4.5 ★ Despliegue y verificación mirando la lámina generada
+- [x] 4.5 ★ Despliegue y verificación mirando la lámina generada — en producción en 36 s; QR decodificado con jsQR abre el minuto (200); axe 0
 
 ## 5. Series y etiquetas (1-nov / 2-nov)
 
