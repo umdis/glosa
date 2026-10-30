@@ -186,10 +186,15 @@
 			{/key}
 		{/if}
 		<p class="compartir">
-			Or share it as a short vertical video with subtitles:
+			Or share it: as a short vertical video with subtitles,
 			<a href={resolve('/c/[fragmento]', { fragmento: String(citaPorGuardar.fragmentoId) })}
 				>Make a clip</a
-			>
+			>, or as an illustrated card with a QR code to this minute,
+			<a
+				href="{resolve('/l/[fragmento]', {
+					fragmento: String(citaPorGuardar.fragmentoId)
+				})}?q={encodeURIComponent(citaPorGuardar.frase)}">Make a card</a
+			>.
 		</p>
 	{/if}
 </dialog>

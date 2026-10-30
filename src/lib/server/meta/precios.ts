@@ -16,6 +16,9 @@ const POR_MILLON: Record<string, PrecioTokens> = {
 
 const TRANSCRIPCION_USD_POR_HORA = 0.18;
 
+/** Muse Image: precio por imagen generada. */
+export const COSTO_IMAGEN_USD = 0.01;
+
 export function costoTokens(
 	modelo: string,
 	tokensEntrada: number,

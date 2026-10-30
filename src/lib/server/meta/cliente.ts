@@ -1,8 +1,9 @@
-import { costoTokens, costoTranscripcion } from './precios';
+import { COSTO_IMAGEN_USD, costoTokens, costoTranscripcion } from './precios';
 
 const BASE_URL = 'https://api.meta.ai/v1';
 export const MODELO_RAZONAMIENTO = 'muse-spark-1.3';
 export const MODELO_TRANSCRIPCION = 'muse-voice-transcribe-1.0';
+export const MODELO_IMAGEN = 'muse-image-1.0';
 
 /** Uso de una llamada, listo para guardar en la tabla `gasto`. */
 export interface UsoMedido {
@@ -180,6 +181,38 @@ export class ClienteMeta {
 			costoUsd: costoTokens(cuerpo.model, entrada, cache, salida)
 		});
 		return datos;
+	}
+
+	/**
+	 * Genera una ilustración con Muse Image (Images API compatible con OpenAI; reconocimiento del
+	 * 2026-10-30: `size` 1024x1536 devuelve 1280×1920 y `output_format: png` devuelve PNG). Se
+	 * cobra por imagen, así que se registra a precio fijo.
+	 */
+	async generarImagen(prompt: string, tamano = '1024x1536'): Promise<Uint8Array> {
+		const respuesta = await this.solicitar('generar_imagen', '/images/generations', () => ({
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				model: MODELO_IMAGEN,
+				prompt,
+				n: 1,
+				size: tamano,
+				output_format: 'png'
+			})
+		}));
+		const datos = (await respuesta.json()) as { data?: Array<{ b64_json?: string }> };
+		const base64 = datos.data?.[0]?.b64_json;
+		if (!base64) throw new ErrorMeta(502, 'Muse Image no devolvió imagen', 'generar_imagen');
+		this.registroGasto.registrar({
+			modelo: MODELO_IMAGEN,
+			operacion: 'generar_imagen',
+			tokensEntrada: 0,
+			tokensCache: 0,
+			tokensSalida: 0,
+			segundosAudio: 0,
+			costoUsd: COSTO_IMAGEN_USD
+		});
+		return Uint8Array.from(Buffer.from(base64, 'base64'));
 	}
 
 	/** Sube un archivo a la Files API con caducidad. Devuelve su id. */

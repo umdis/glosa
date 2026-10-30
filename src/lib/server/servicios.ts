@@ -18,6 +18,7 @@ import {
 	type DependenciasIngesta
 } from './ingesta/pipeline';
 import type { RutasFfmpeg } from './medios/ffmpeg';
+import { generarLamina, type PedidoLamina } from './laminas/lamina';
 import { ClienteMeta } from './meta/cliente';
 
 /** Servicios compartidos del proceso. Se crean una sola vez, al primer uso. */
@@ -35,6 +36,10 @@ interface Servicios {
 	 * de tres esperando: ffmpeg comparte el servidor con otras apps (glosa-competitiva D5).
 	 */
 	clip(pedido: ClipPedido): Promise<string>;
+	/** Genera (o devuelve de la caché) la lámina de una cita, con la misma cola de uno en uno. */
+	lamina(pedido: PedidoLamina): Promise<string>;
+	/** Carpeta de las láminas ya hechas. */
+	carpetaLaminas: string;
 }
 
 let servicios: Servicios | undefined;
@@ -81,7 +86,25 @@ export function obtenerServicios(): Servicios {
 				)
 			);
 
-		servicios = { ...deps, meta, encolarProcesamiento, topeAlcanzado, clip };
+		const carpetaLaminas = join(DATA_DIR, 'laminas');
+		const colaLaminas = crearCola(3);
+		const lamina = (pedido: PedidoLamina) =>
+			colaLaminas.encolar(pedido.clave, () =>
+				generarLamina(
+					{ meta, ffmpeg: FFMPEG_PATH, carpeta: carpetaLaminas, fuentes: CARPETA_FUENTES },
+					pedido
+				)
+			);
+
+		servicios = {
+			...deps,
+			meta,
+			encolarProcesamiento,
+			topeAlcanzado,
+			clip,
+			lamina,
+			carpetaLaminas
+		};
 	}
 	return servicios;
 }
