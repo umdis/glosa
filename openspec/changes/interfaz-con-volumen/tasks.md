@@ -16,7 +16,7 @@
 
 - [x] 3.1 Pruebas, `check`, `lint` y contraste de los tokens nuevos
 - [x] 3.2 axe sin violaciones serias, reflujo a 320 px, movimiento reducido y camino sin JS
-- [ ] 3.3 Capturas de antes y después, despliegue y verificación desde fuera
+- [x] 3.3 Capturas de antes y después, despliegue y verificación desde fuera (dcf9995 en glosa.umdis.site: transmisión sin retención por Traefik, axe 0 en producción, 4/4 citas en vivo)
 
 ## Notas de verificación (2026-10-30, demo local)
 
