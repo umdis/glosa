@@ -45,6 +45,37 @@ export function agruparEtapas(pasos: PasoAgente[], trabajando: boolean, completa
 	});
 }
 
+/** Un paso tal como se muestra: los repetidos de la misma herramienta y detalle, juntos. */
+export type PasoMostrado = PasoAgente & { veces: number };
+
+/**
+ * Junta los pasos repetidos (la misma herramienta con el mismo detalle, p. ej. ocho lecturas del
+ * mismo video) en uno, en la posición del primero, con las veces y los resultados sumados. Si
+ * alguno no trae cifra (-1), la suma tampoco: no se inventa.
+ */
+export function compactarPasos(pasos: PasoAgente[]): PasoMostrado[] {
+	const salida: PasoMostrado[] = [];
+	const indice = new Map<string, PasoMostrado>();
+	for (const paso of pasos) {
+		if (paso.tipo !== 'herramienta') {
+			salida.push({ ...paso, veces: 1 });
+			continue;
+		}
+		const clave = `${paso.herramienta}\u0000${paso.detalle}`;
+		const previo = indice.get(clave);
+		if (previo && previo.tipo === 'herramienta') {
+			previo.veces++;
+			previo.resultados =
+				previo.resultados < 0 || paso.resultados < 0 ? -1 : previo.resultados + paso.resultados;
+			continue;
+		}
+		const nuevo: PasoMostrado = { ...paso, veces: 1 };
+		indice.set(clave, nuevo);
+		salida.push(nuevo);
+	}
+	return salida;
+}
+
 /**
  * La traza de una respuesta que llegó sin transmisión (formulario sin JS o respuesta guardada):
  * solo lo que la respuesta conserva: las consultas, que se redactó y la verificación. Sin cifras que

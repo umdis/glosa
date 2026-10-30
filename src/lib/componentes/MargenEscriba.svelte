@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { agruparEtapas, type Etapa, type PasoAgente } from '#lib/traza.js';
+	import {
+		agruparEtapas,
+		compactarPasos,
+		type Etapa,
+		type PasoAgente,
+		type PasoMostrado
+	} from '#lib/traza.js';
 
 	/**
 	 * El margen del escriba (interfaz-con-volumen): las cuatro etapas de una respuesta y, debajo de
@@ -47,7 +53,7 @@
 
 	const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
-	function describir(paso: PasoAgente): { texto: string; cifra: string } {
+	function describir(paso: PasoMostrado): { texto: string; cifra: string } {
 		if (paso.tipo === 'redactar') {
 			return {
 				texto: 'Using only what it read',
@@ -66,15 +72,20 @@
 				: paso.resultados === 0
 					? 'nothing'
 					: plural(paso.resultados, 'passage', 'passages');
+		// Lo repetido va junto: «8 reads, 48 passages» en vez de ocho líneas iguales.
+		const veces =
+			paso.veces > 1
+				? `${paso.veces} ${paso.herramienta === 'leer_fragmentos' ? 'reads' : 'times'}${cifra ? ', ' : ''}`
+				: '';
 		switch (paso.herramienta) {
 			case 'buscar':
-				return { texto: `“${paso.detalle}”`, cifra };
+				return { texto: `“${paso.detalle}”`, cifra: veces + cifra };
 			case 'pasajes':
-				return { texto: `Scripture index: ${paso.detalle}`, cifra };
+				return { texto: `Scripture index: ${paso.detalle}`, cifra: veces + cifra };
 			case 'en_pantalla':
-				return { texto: 'Slides and whiteboard', cifra };
+				return { texto: 'Slides and whiteboard', cifra: veces + cifra };
 			case 'leer_fragmentos':
-				return { texto: paso.detalle || 'Around a match', cifra };
+				return { texto: paso.detalle || 'Around a match', cifra: veces + cifra };
 			default:
 				return { texto: 'The list of videos', cifra };
 		}
@@ -118,7 +129,7 @@
 					{/if}
 					{#if etapa.pasos.length}
 						<ul class="pasos">
-							{#each etapa.pasos as paso, i (i)}
+							{#each compactarPasos(etapa.pasos) as paso, i (i)}
 								{@const d = describir(paso)}
 								<li>
 									<span class="que" lang={paso.tipo === 'herramienta' ? 'es' : undefined}

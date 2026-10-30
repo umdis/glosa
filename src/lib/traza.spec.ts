@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agruparEtapas, trazaDeRespuesta, type PasoAgente } from './traza';
+import { agruparEtapas, compactarPasos, trazaDeRespuesta, type PasoAgente } from './traza';
 
 const buscar = (detalle: string, resultados = 3): PasoAgente => ({
 	tipo: 'herramienta',
@@ -51,6 +51,26 @@ describe('agruparEtapas', () => {
 			'prueba'
 		]);
 		expect(etapas[0].estado).toBe('activa');
+	});
+});
+
+describe('compactarPasos', () => {
+	it('junta las lecturas del mismo video y suma lo leído, en el sitio de la primera', () => {
+		const otra: PasoAgente = { ...leer, detalle: 'Criar hijos', resultados: 4 };
+		const pasos = compactarPasos([buscar('fe'), leer, otra, leer, buscar('prueba')]);
+		expect(
+			pasos.map((p) => (p.tipo === 'herramienta' ? [p.detalle, p.veces, p.resultados] : []))
+		).toEqual([
+			['fe', 1, 3],
+			['Devocional', 2, 10],
+			['Criar hijos', 1, 4],
+			['prueba', 1, 3]
+		]);
+	});
+
+	it('si una de las repetidas no trae cifra, la suma tampoco', () => {
+		const [unido] = compactarPasos([buscar('fe', -1), buscar('fe', 3)]);
+		expect(unido).toMatchObject({ veces: 2, resultados: -1 });
 	});
 });
 
