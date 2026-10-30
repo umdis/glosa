@@ -41,12 +41,18 @@ const superficies = ['fondo', 'papel', 'papel-alto'];
 /** Texto sobre cada superficie, y la letra de los botones principales (fondo sobre tinta). */
 const texto: Array<[string, string]> = [
 	...['tinta', 'suave', 'rubrica'].flatMap((t) => superficies.map((s): [string, string] => [t, s])),
-	['fondo', 'tinta']
+	['fondo', 'tinta'],
+	// La lámina de tinta: su texto, su carmín y el botón de vitela con letra de lámina.
+	['lamina-tinta', 'lamina'],
+	['lamina-suave', 'lamina'],
+	['lamina-rubrica', 'lamina']
 ];
 /** Bordes de campos, del interruptor y el foco, sobre cada superficie. */
-const control: Array<[string, string]> = ['suave', 'tinta'].flatMap((t) =>
-	superficies.map((s): [string, string] => [t, s])
-);
+const control: Array<[string, string]> = [
+	...['suave', 'tinta'].flatMap((t) => superficies.map((s): [string, string] => [t, s])),
+	['lamina-suave', 'lamina'],
+	['lamina-tinta', 'lamina']
+];
 
 describe.each([
 	['claro', claro],

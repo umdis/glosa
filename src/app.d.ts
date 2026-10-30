@@ -5,7 +5,10 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			/** Llegó a `/ask?q=` con un clic en «Ask» de la portada: la pregunta empieza sola. */
+			preguntar?: boolean;
+		}
 		// interface Platform {}
 	}
 }

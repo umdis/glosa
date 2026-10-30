@@ -26,6 +26,16 @@
 	--linea: #d4d8cd;
 	--marca: #d9dec9;
 
+	/*
+	 * La lámina (interfaz-con-volumen): una hoja de tinta ferrogálica para la pieza protagonista de
+	 * una pantalla. Su texto es vitela y su carmín se aclara para leerse sobre lo oscuro.
+	 */
+	--lamina: #1c2232;
+	--lamina-tinta: #eef0e8;
+	--lamina-suave: #b3b9c6;
+	--lamina-rubrica: #ff8f9d;
+	--lamina-linea: #3a4257;
+
 	/* Sombras tintadas con la tinta: la pieza se apoya en la vitela, no flota en gris. */
 	--sombra-1: 0 1px 2px rgb(31 37 51 / 0.06), 0 1px 1px rgb(31 37 51 / 0.04);
 	--sombra-2: 0 2px 4px rgb(31 37 51 / 0.05), 0 12px 28px -14px rgb(31 37 51 / 0.28);
@@ -78,6 +88,9 @@
 		--linea: #2c3446;
 		--marca: #3a4231;
 
+		--lamina: #0e121b;
+		--lamina-linea: #2a3142;
+
 		--sombra-1: 0 1px 2px rgb(0 0 0 / 0.3);
 		--sombra-2: 0 2px 4px rgb(0 0 0 / 0.25), 0 16px 32px -16px rgb(0 0 0 / 0.6);
 	}
@@ -104,6 +117,45 @@ html {
 body {
 	margin: 0;
 	min-height: 100vh;
+}
+
+/*
+ * Barras de desplazamiento con la tinta del tema, no el gris del sistema. El pulgar usa
+ * `--suave` (≥ 3:1 sobre cada superficie, medido) para que se siga viendo; el carril es la
+ * propia superficie. Los paneles con desplazamiento propio usan `.desplazable`: barra fina y
+ * hueco reservado, para que el contenido no salte cuando aparece la barra.
+ */
+html {
+	scrollbar-color: var(--suave) var(--fondo);
+}
+
+.desplazable {
+	scrollbar-width: thin;
+	scrollbar-color: var(--suave) transparent;
+	scrollbar-gutter: stable;
+	overscroll-behavior: contain;
+}
+
+/* Safari aún no entiende `scrollbar-color`: lo mismo con sus pseudoelementos. */
+@supports not (scrollbar-color: auto) {
+	::-webkit-scrollbar {
+		width: 12px;
+		height: 12px;
+	}
+	.desplazable::-webkit-scrollbar {
+		width: 8px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		border: 3px solid transparent;
+		border-radius: 999px;
+		background: var(--suave) padding-box;
+	}
+	.desplazable::-webkit-scrollbar-thumb {
+		border-width: 2px;
+	}
 }
 
 h1,

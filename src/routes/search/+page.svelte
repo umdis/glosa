@@ -116,8 +116,8 @@
 								data-texto={m.texto}
 								data-etiqueta="{grupo.titulo}, {folio(m.inicioMs)}"
 								lang="en"
-								>Use<span class="solo-lector">
-									the passage at {folio(m.inicioMs)}: save or share it</span
+								>Use this quote<span class="solo-lector">
+									: the passage at {folio(m.inicioMs)}</span
 								></a
 							>
 						</li>

@@ -48,6 +48,7 @@
 		return encontrado;
 	});
 
+	const duracionMs = $derived(data.video.duracionMs ?? 0);
 	const pagina = $derived(resolve('/videos/[id]', { id: data.video.id }));
 	const fuente = $derived(
 		`${resolve('/videos/[id]/media', { id: data.video.id })}${data.inicioSegundos ? `#t=${data.inicioSegundos}` : ''}`
@@ -160,10 +161,14 @@
 		<h1 lang="es">{data.video.titulo}</h1>
 		{#if data.video.duracionMs}<p class="dato">{duracion(data.video.duracionMs)}</p>{/if}
 		{#if data.ficha.resumen}<p class="resumen" lang="es">{data.ficha.resumen}</p>{/if}
+		<p class="procedencia">
+			Transcript by Muse Voice Transcribe{#if data.pantalla.length}; slides and whiteboard read by
+				Muse Spark{/if}. Every line links to its moment.
+		</p>
 	</header>
 
 	<!-- La lámina: el video con subtítulos de la propia transcripción, las herramientas y el índice. -->
-	<div class="lamina">
+	<div class="lamina desplazable">
 		<figure class="iluminacion" style:view-transition-name="video-{data.video.id}">
 			<video
 				bind:this={reproductor}
@@ -182,6 +187,46 @@
 				/>
 			</video>
 		</figure>
+
+		{#if duracionMs && (data.pasajes.length || data.pantalla.length)}
+			<!--
+				El mapa de momentos (interfaz-con-volumen D6): dónde cae cada pasaje y cada texto en
+				pantalla sobre la duración, y lo que suena. Es una ayuda visual para el ratón; con teclado
+				y lector, la lista «In this video» lleva a los mismos momentos.
+			-->
+			<div class="mapa" aria-hidden="true">
+				<div class="pista">
+					<span class="sonando" style:width="{Math.min(100, (tiempoMs / duracionMs) * 100)}%"
+					></span>
+					{#each data.pantalla as ms, i (i)}
+						<a
+							class="marca en-pantalla"
+							tabindex="-1"
+							style:left="{(ms / duracionMs) * 100}%"
+							href="{pagina}?t={Math.floor(ms / 1000)}"
+							title="Shown on screen at {folio(ms)}"
+							onclick={(e) => saltarA(e, ms)}
+						></a>
+					{/each}
+					{#each data.pasajes as p, i (i)}
+						<a
+							class="marca pasaje"
+							tabindex="-1"
+							style:left="{(p.momentoMs / duracionMs) * 100}%"
+							href="{pagina}?t={Math.floor(p.momentoMs / 1000)}"
+							title="{p.referencia} at {folio(p.momentoMs)}"
+							onclick={(e) => saltarA(e, p.momentoMs)}
+						></a>
+					{/each}
+				</div>
+				<p class="leyenda">
+					{#if data.pasajes.length}<span><span class="muestra pasaje"></span>Scripture</span>{/if}
+					{#if data.pantalla.length}<span><span class="muestra en-pantalla"></span>On screen</span
+						>{/if}
+					<span class="total">{folio(duracionMs)}</span>
+				</p>
+			</div>
+		{/if}
 
 		<div class="herramientas">
 			<label class="interruptor">
@@ -436,6 +481,101 @@
 		max-width: var(--medida);
 		margin: var(--e-4) 0 0;
 		font-size: var(--t-1);
+	}
+
+	.procedencia {
+		max-width: var(--medida);
+		margin: var(--e-2) 0 0;
+		color: var(--suave);
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-0);
+	}
+
+	/* ── Mapa de momentos: la duración como una regla, con sus pasajes y lo que salió en pantalla ── */
+	.mapa {
+		padding: var(--e-3) var(--e-4) var(--e-2);
+		border-radius: var(--radio-m);
+		background: var(--lamina);
+		color: var(--lamina-suave);
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-0);
+	}
+
+	.pista {
+		position: relative;
+		height: 1.75rem;
+		border-bottom: 2px solid var(--lamina-linea);
+	}
+
+	.sonando {
+		position: absolute;
+		left: 0;
+		bottom: -2px;
+		height: 2px;
+		background: var(--lamina-tinta);
+	}
+
+	/* El pasaje es un trazo alto en carmín; lo de pantalla, un cuadro bajo: forma y color a la vez. */
+	.marca {
+		position: absolute;
+		bottom: 0;
+		width: 0.9rem;
+		height: 100%;
+		margin-left: -0.45rem;
+	}
+
+	.marca::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		bottom: 0;
+		translate: -50% 0;
+	}
+
+	.marca.pasaje::after,
+	.muestra.pasaje {
+		width: 3px;
+		height: 1.4rem;
+		border-radius: 2px;
+		background: var(--lamina-rubrica);
+	}
+
+	.marca.en-pantalla::after,
+	.muestra.en-pantalla {
+		width: 0.55rem;
+		height: 0.55rem;
+		border: 2px solid var(--lamina-tinta);
+		border-radius: 1px;
+	}
+
+	.marca:hover::after {
+		scale: 1.3;
+	}
+
+	.leyenda {
+		display: flex;
+		gap: var(--e-4);
+		align-items: center;
+		margin: var(--e-2) 0 0;
+	}
+
+	.leyenda > span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.muestra {
+		display: inline-block;
+	}
+
+	.muestra.pasaje {
+		height: 0.9rem;
+	}
+
+	.total {
+		margin-left: auto;
+		font-variant-numeric: tabular-nums;
 	}
 
 	/* ── Lámina ── */

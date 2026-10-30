@@ -52,8 +52,6 @@
 		if (guardadaEn) abrirGuardada?.focus();
 	});
 
-	const enPortada = $derived(page.url.pathname === '/');
-
 	/** Transición entre páginas donde el navegador la tenga y nadie haya pedido menos movimiento. */
 	onNavigate((navegacion) => {
 		dialogo?.close();
@@ -95,49 +93,49 @@
 	<a class="marca" href={resolve('/')} aria-label="Glosa, home"
 		><span class="calderon" aria-hidden="true">¶</span> Glosa</a
 	>
-	{#if !enPortada}
-		<form class="buscar" action="/search" method="get" role="search">
-			<label class="solo-lector" for="buscar-cabecera">Search what was said</label>
-			<div class="campo-buscar">
-				<svg viewBox="0 0 20 20" aria-hidden="true"
-					><circle
-						cx="8.5"
-						cy="8.5"
-						r="5.5"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.8"
-					/><path
-						d="M13 13l4.5 4.5"
-						stroke="currentColor"
-						stroke-width="1.8"
-						stroke-linecap="round"
-					/></svg
-				>
-				<input
-					id="buscar-cabecera"
-					name="q"
-					type="search"
-					placeholder="Search what was said"
-					value={page.url.pathname === '/search' ? (page.url.searchParams.get('q') ?? '') : ''}
-					autocomplete="off"
-					aria-keyshortcuts="/"
-					data-atajo-buscar
-				/>
-				<kbd class="pista" aria-hidden="true">/</kbd>
-			</div>
-		</form>
-	{/if}
+	<form class="buscar" action="/search" method="get" role="search">
+		<label class="solo-lector" for="buscar-cabecera">Search what was said</label>
+		<div class="campo-buscar">
+			<svg viewBox="0 0 20 20" aria-hidden="true"
+				><circle
+					cx="8.5"
+					cy="8.5"
+					r="5.5"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.8"
+				/><path
+					d="M13 13l4.5 4.5"
+					stroke="currentColor"
+					stroke-width="1.8"
+					stroke-linecap="round"
+				/></svg
+			>
+			<input
+				id="buscar-cabecera"
+				name="q"
+				type="search"
+				placeholder="Search what was said"
+				value={page.url.pathname === '/search' ? (page.url.searchParams.get('q') ?? '') : ''}
+				autocomplete="off"
+				aria-keyshortcuts="/"
+				data-atajo-buscar
+			/>
+			<kbd class="pista" aria-hidden="true">/</kbd>
+		</div>
+	</form>
 	<nav aria-label="Main">
 		<a
 			class="chip"
 			href={resolve('/ask')}
-			aria-current={page.url.pathname === '/ask' ? 'page' : undefined}>Ask the collection</a
+			aria-current={page.url.pathname === '/ask' ? 'page' : undefined}
+			>Ask<span class="resto"> the collection</span></a
 		>
 		<a
 			class="chip"
 			href={resolve('/passages')}
-			aria-current={page.url.pathname === '/passages' ? 'page' : undefined}>Scripture index</a
+			aria-current={page.url.pathname === '/passages' ? 'page' : undefined}
+			>Scripture<span class="resto"> index</span></a
 		>
 		<a
 			class="chip"
@@ -156,7 +154,7 @@
 
 <dialog
 	bind:this={dialogo}
-	class="dialogo-guardar tarjeta"
+	class="dialogo-guardar tarjeta desplazable"
 	aria-labelledby="t-guardar"
 	onclose={() => (citaPorGuardar = undefined)}
 >
@@ -272,20 +270,46 @@
 		margin-left: auto;
 	}
 
+	/*
+	 * Móvil: dos filas fijas, sin saltos. Arriba la marca y la búsqueda; abajo las tres secciones
+	 * a todo el ancho, con la etiqueta corta (el resto queda en el nombre accesible).
+	 */
 	@media (max-width: 48rem) {
 		:global(:root) {
-			--alto-cabecera: 7.5rem;
+			--alto-cabecera: 7.25rem;
 		}
 		.cabecera {
-			gap: var(--e-2) var(--e-4);
+			flex-wrap: wrap;
+			gap: var(--e-2) var(--e-3);
+		}
+		.marca {
+			font-size: var(--t-2);
 		}
 		.buscar {
-			order: 3;
-			flex-basis: 100%;
+			flex: 1 1 0;
+			min-width: 0;
 			max-width: none;
 		}
 		.pista {
 			display: none;
+		}
+		nav {
+			flex: 1 0 100%;
+			flex-wrap: nowrap;
+			margin-left: 0;
+		}
+		nav .chip {
+			flex: 1 1 auto;
+			justify-content: center;
+			padding-inline: 0.5rem;
+		}
+		.resto {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
 		}
 	}
 

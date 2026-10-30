@@ -105,6 +105,48 @@ describe('preguntar', () => {
 		expect(cliente.recibidos[2].tools).toBeUndefined();
 	});
 
+	it('la traza son exactamente las herramientas ejecutadas, con lo que devolvieron', async () => {
+		const { db, id } = preparar();
+		const cliente = clienteGuionado([
+			() => llamar('buscar', { consulta: 'paciencia' }),
+			() => llamar('buscar', { consulta: 'astronomía' }),
+			() => llamar('leer_fragmentos', { fragmento_id: id(1), alrededor: 1 }),
+			() => texto('Listo.'),
+			() =>
+				texto(
+					JSON.stringify({
+						sin_evidencia: false,
+						afirmaciones: [
+							{
+								texto: 'La prueba produce paciencia.',
+								citas: [
+									{ fragmento_id: id(1), frase: 'la prueba de vuestra fe produce paciencia' },
+									{ fragmento_id: id(1), frase: 'una frase que nunca se dijo en el video' }
+								]
+							}
+						]
+					})
+				)
+		]);
+		const pasos: unknown[] = [];
+
+		await preguntar(db, cliente, '¿Qué produce la prueba?', { alPaso: (p) => pasos.push(p) });
+
+		expect(pasos).toEqual([
+			{ tipo: 'herramienta', herramienta: 'buscar', detalle: 'paciencia', resultados: 1 },
+			{ tipo: 'herramienta', herramienta: 'buscar', detalle: 'astronomía', resultados: 0 },
+			// Lee el fragmento y su vecino visible; el pendiente de revisión no cuenta.
+			{
+				tipo: 'herramienta',
+				herramienta: 'leer_fragmentos',
+				detalle: 'Devocional',
+				resultados: 2
+			},
+			{ tipo: 'redactar', fragmentos: 2 },
+			{ tipo: 'verificar', citas: 2, verificadas: 1 }
+		]);
+	});
+
 	it('sin evidencia no inventa: no llega a la fase de respuesta', async () => {
 		const { db } = preparar();
 		const cliente = clienteGuionado([

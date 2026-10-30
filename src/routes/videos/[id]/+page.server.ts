@@ -36,7 +36,8 @@ export const load: PageServerLoad = ({ params, url }) => {
 			p.fragmentoId
 		);
 	}
-	for (const p of textosEnPantalla(db, params.id)) {
+	const enPantalla = textosEnPantalla(db, params.id);
+	for (const p of enPantalla) {
 		ubicar(p.momentoMs, { tipo: 'pantalla', momentoMs: p.momentoMs, texto: p.texto });
 	}
 	for (const glosas of Object.values(glosasPorFragmento)) {
@@ -52,6 +53,8 @@ export const load: PageServerLoad = ({ params, url }) => {
 			referencia: referencia(p),
 			origen: p.origen
 		})),
+		/** Los momentos en que Muse Spark leyó algo en pantalla, para el mapa del video. */
+		pantalla: enPantalla.map((p) => p.momentoMs),
 		ficha: fichaAprobada(db, params.id),
 		posterSegundo: segundoPoster(video.duracionMs),
 		inicioSegundos: Number.isFinite(t) && t > 0 ? Math.floor(t) : 0

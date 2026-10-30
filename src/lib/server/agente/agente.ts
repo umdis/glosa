@@ -10,6 +10,7 @@ import {
 	type AfirmacionPropuesta,
 	type AfirmacionVerificada
 } from '../verificacion/verificar';
+import type { PasoAgente } from '../../traza';
 import { DEFINICIONES, ejecutarHerramienta, type FragmentoEvidencia } from './herramientas';
 
 /**
@@ -28,10 +29,14 @@ export interface ResultadoAgente {
 	busquedas: string[];
 }
 
+export type { PasoAgente };
+
 export interface OpcionesAgente {
 	maximoPasos?: number;
 	/** Tope de tokens de entrada acumulados en la fase de investigación. */
 	maximoTokens?: number;
+	/** Recibe cada paso real en cuanto ocurre (interfaz-con-volumen D2), para dibujarlo en vivo. */
+	alPaso?: (paso: PasoAgente) => void;
 }
 
 const INSTRUCCIONES_INVESTIGAR = `You are the research assistant of Glosa, a workspace over a collection of video transcripts (sermons, lectures, talks), mostly in Spanish.
@@ -95,6 +100,7 @@ export async function preguntar(
 ): Promise<ResultadoAgente> {
 	const maximoPasos = opciones.maximoPasos ?? 8;
 	const maximoTokens = opciones.maximoTokens ?? 150_000;
+	const alPaso = opciones.alPaso ?? (() => {});
 	const evidencia = new Map<number, FragmentoEvidencia>();
 	const busquedas: string[] = [];
 	const mensajes: MensajeChat[] = [
@@ -124,10 +130,13 @@ export async function preguntar(
 				// Argumentos mal formados: la herramienta responde con lo que pueda.
 			}
 			if (llamada.function.name === 'buscar') busquedas.push(String(argumentos.consulta ?? ''));
-			mensajes.push({
-				role: 'tool',
-				tool_call_id: llamada.id,
-				content: ejecutarHerramienta(db, llamada.function.name, argumentos, evidencia)
+			const contenido = ejecutarHerramienta(db, llamada.function.name, argumentos, evidencia);
+			mensajes.push({ role: 'tool', tool_call_id: llamada.id, content: contenido });
+			alPaso({
+				tipo: 'herramienta',
+				herramienta: llamada.function.name,
+				detalle: detallePaso(llamada.function.name, argumentos, contenido),
+				resultados: contarResultados(contenido)
 			});
 		}
 	}
@@ -137,6 +146,7 @@ export async function preguntar(
 	}
 
 	// Fase 2: responder solo con la evidencia vista, en salida estructurada.
+	alPaso({ tipo: 'redactar', fragmentos: evidencia.size });
 	const fragmentos = [...evidencia.values()]
 		.map((f) => `[fragmento ${f.fragmento_id}] (${f.video})\n${f.texto}`)
 		.join('\n\n');
@@ -153,13 +163,42 @@ export async function preguntar(
 	);
 
 	const propuesta = leerRespuesta(final.choices[0]?.message.content ?? '');
+	const afirmaciones = verificarAfirmaciones(db, propuesta.afirmaciones);
+	const citas = afirmaciones.flatMap((a) => a.citas);
+	alPaso({
+		tipo: 'verificar',
+		citas: citas.length,
+		verificadas: citas.filter((c) => c.estado === 'verificada').length
+	});
 	return {
 		pregunta,
-		afirmaciones: verificarAfirmaciones(db, propuesta.afirmaciones),
+		afirmaciones,
 		sinEvidencia: propuesta.sinEvidencia,
 		pasos,
 		busquedas
 	};
+}
+
+/** Cuántos elementos devolvió una herramienta: una lista cuenta sus filas; un aviso, cero. */
+function contarResultados(contenido: string): number {
+	try {
+		const datos = JSON.parse(contenido);
+		return Array.isArray(datos) ? datos.length : 0;
+	} catch {
+		return 0;
+	}
+}
+
+/** Lo que la persona reconoce de cada paso: la consulta, la referencia o el video leído. */
+function detallePaso(herramienta: string, argumentos: Record<string, unknown>, contenido: string) {
+	if (herramienta === 'buscar') return String(argumentos.consulta ?? '').slice(0, 200);
+	if (herramienta === 'pasajes') return String(argumentos.referencia ?? '').slice(0, 200);
+	try {
+		const datos = JSON.parse(contenido);
+		return Array.isArray(datos) && typeof datos[0]?.video === 'string' ? datos[0].video : '';
+	} catch {
+		return '';
+	}
 }
 
 /** Convierte la salida JSON del modelo en afirmaciones propuestas, tolerando campos de más. */
