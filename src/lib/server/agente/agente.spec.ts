@@ -147,6 +147,84 @@ describe('preguntar', () => {
 		]);
 	});
 
+	it('pregunta en inglés: traduce solo las citas verificadas, y antes de anunciar la verificación', async () => {
+		const { db, id } = preparar();
+		const cliente = clienteGuionado([
+			() => llamar('buscar', { consulta: 'paciencia' }),
+			() => texto('Listo.'),
+			() =>
+				texto(
+					JSON.stringify({
+						sin_evidencia: false,
+						idioma: 'en',
+						afirmaciones: [
+							{
+								texto: 'Trials produce patience.',
+								citas: [
+									{ fragmento_id: id(1), frase: 'la prueba de vuestra fe produce paciencia' },
+									{ fragmento_id: id(1), frase: 'una frase que nunca se dijo en el video' }
+								]
+							}
+						]
+					})
+				),
+			(cuerpo) => {
+				// Al traductor solo le llega la cita verificada.
+				expect(String(cuerpo.messages.at(-1)?.content)).toBe(
+					'1. la prueba de vuestra fe produce paciencia'
+				);
+				return texto(
+					JSON.stringify({
+						traducciones: [{ n: 1, texto: 'the trying of your faith produces patience' }]
+					})
+				);
+			}
+		]);
+		const pasos: Array<{ tipo: string }> = [];
+
+		const resultado = await preguntar(db, cliente, 'What produces patience?', {
+			alPaso: (p) => pasos.push(p)
+		});
+
+		expect(resultado.idioma).toBe('en');
+		const [verificada, falsa] = resultado.afirmaciones[0].citas;
+		expect(verificada).toMatchObject({
+			estado: 'verificada',
+			frase: 'la prueba de vuestra fe produce paciencia',
+			traduccion: 'the trying of your faith produces patience'
+		});
+		expect(falsa.estado).toBe('no_verificada');
+		expect('traduccion' in falsa).toBe(false);
+		expect(pasos.map((p) => p.tipo).slice(-3)).toEqual(['redactar', 'traducir', 'verificar']);
+	});
+
+	it('si la traducción falla, la respuesta llega igual sin traducciones', async () => {
+		const { db, id } = preparar();
+		const cliente = clienteGuionado([
+			() => llamar('buscar', { consulta: 'paciencia' }),
+			() => texto('Listo.'),
+			() =>
+				texto(
+					JSON.stringify({
+						sin_evidencia: false,
+						idioma: 'en',
+						afirmaciones: [
+							{
+								texto: 'Trials produce patience.',
+								citas: [{ fragmento_id: id(1), frase: 'la prueba de vuestra fe produce paciencia' }]
+							}
+						]
+					})
+				),
+			() => {
+				throw new Error('503');
+			}
+		]);
+		const resultado = await preguntar(db, cliente, 'What produces patience?');
+		expect(resultado.afirmaciones[0].citas[0]).toMatchObject({ estado: 'verificada' });
+		expect(resultado.afirmaciones[0].citas[0]).not.toHaveProperty('traduccion', expect.anything());
+	});
+
 	it('sin evidencia no inventa: no llega a la fase de respuesta', async () => {
 		const { db } = preparar();
 		const cliente = clienteGuionado([

@@ -30,6 +30,8 @@ export type CitaVerificada =
 			inicioMs: number;
 			/** Proporción de palabras de la frase halladas en orden (0–1). */
 			coincidencia: number;
+			/** Traducción de Muse Spark al idioma de la pregunta: ayuda de lectura, no evidencia. */
+			traduccion?: string;
 	  }
 	| {
 			estado: 'no_verificada';

@@ -185,6 +185,14 @@
 					label="Español"
 					src={resolve('/videos/[id]/captions.vtt', { id: data.video.id })}
 				/>
+				{#if data.subtitulosEn}
+					<track
+						kind="subtitles"
+						srclang="en"
+						label="English (translated by Muse Spark)"
+						src="{resolve('/videos/[id]/captions.vtt', { id: data.video.id })}?lang=en"
+					/>
+				{/if}
 			</video>
 		</figure>
 

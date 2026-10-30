@@ -5,6 +5,7 @@ import { segundoPoster } from '#lib/server/fotogramas.js';
 import { fichaAprobada } from '#lib/server/revision/resumen.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
 import { fragmentosVisibles, obtenerVideo, textosEnPantalla } from '#lib/server/videos.js';
+import { avanceSubtitulos } from '#lib/server/traduccion/subtitulos.js';
 import type { PageServerLoad } from './$types';
 
 /** Nota al margen de un fragmento: un pasaje citado o lo que apareció escrito en pantalla. */
@@ -55,6 +56,8 @@ export const load: PageServerLoad = ({ params, url }) => {
 		})),
 		/** Los momentos en que Muse Spark leyó algo en pantalla, para el mapa del video. */
 		pantalla: enPantalla.map((p) => p.momentoMs),
+		/** Hay al menos una línea traducida al inglés: el reproductor ofrece esa pista. */
+		subtitulosEn: avanceSubtitulos(db, params.id, 'en').traducidas > 0,
 		ficha: fichaAprobada(db, params.id),
 		posterSegundo: segundoPoster(video.duracionMs),
 		inicioSegundos: Number.isFinite(t) && t > 0 ? Math.floor(t) : 0

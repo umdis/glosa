@@ -6,6 +6,11 @@ import { segundoPoster } from '#lib/server/fotogramas.js';
 import { listarPublicadas, retirar } from '#lib/server/investigaciones/datos.js';
 import { decidir, listarPendientes, type Decision } from '#lib/server/revision/decisiones.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import {
+	avanceSubtitulos,
+	subtitular,
+	subtitulandoAhora
+} from '#lib/server/traduccion/subtitulos.js';
 import type { Actions, PageServerLoad } from './$types';
 
 interface FilaVideo {
@@ -38,7 +43,8 @@ export const load: PageServerLoad = ({ request, cookies }) => {
 		videos: videos.map((v) => ({
 			...v,
 			posterSegundo: segundoPoster(v.duracionMs),
-			pasos: pasos.filter((p) => p.videoId === v.id)
+			pasos: pasos.filter((p) => p.videoId === v.id),
+			subtitulosEn: { ...avanceSubtitulos(db, v.id, 'en'), enCurso: subtitulandoAhora(v.id, 'en') }
 		})),
 		pendientes: listarPendientes(db),
 		publicadas: listarPublicadas(db),
@@ -100,6 +106,19 @@ export const actions: Actions = {
 		db.prepare(`UPDATE videos SET estado = 'procesando' WHERE id = ?`).run(videoId);
 		encolarProcesamiento(videoId);
 		return { reintentado: videoId };
+	},
+
+	/** Subtítulos en inglés de un video, en segundo plano (spec idiomas-y-voz). */
+	subtitular: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const videoId = String((await request.formData()).get('videoId') ?? '');
+		const { db, meta, topeAlcanzado } = obtenerServicios();
+		if (!db.prepare(`SELECT 1 FROM videos WHERE id = ?`).get(videoId)) {
+			return fail(404, { error: 'That video does not exist.' });
+		}
+		if (topeAlcanzado()) return fail(429, { error: 'The daily spending cap was reached.' });
+		subtitular(db, meta, videoId, 'en');
+		return { subtitulando: videoId };
 	},
 
 	/** Retira una investigación publicada por un visitante (spec investigaciones: límites). */

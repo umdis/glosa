@@ -249,6 +249,12 @@
 											/>
 										{/if}
 										<blockquote lang="es">«{cita.frase}»</blockquote>
+										{#if cita.estado === 'verificada' && cita.traduccion}
+											<p class="traduccion" lang={resultado.idioma}>
+												{cita.traduccion}
+												<span class="quien-traduce" lang="en">Translation by Muse Spark</span>
+											</p>
+										{/if}
 										{#if cita.estado === 'verificada'}
 											<p class="fuente">
 												<svg class="sello" viewBox="0 0 16 16" aria-hidden="true"
@@ -492,6 +498,24 @@
 		display: grid;
 		gap: var(--e-3);
 		padding-block: var(--e-4);
+	}
+
+	/* La traducción va debajo y en otra voz: ayuda a leer, la evidencia es la frase original. */
+	.traduccion {
+		grid-column: 2;
+		margin: var(--e-1) 0 0;
+		padding-left: var(--e-3);
+		border-left: 2px solid var(--linea);
+		color: var(--suave);
+		font-family: var(--letra-interfaz);
+		font-size: var(--t-0);
+		line-height: 1.45;
+	}
+
+	.quien-traduce {
+		display: block;
+		margin-top: 0.15rem;
+		font-style: italic;
 	}
 
 	blockquote {

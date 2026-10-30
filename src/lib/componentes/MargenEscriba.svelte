@@ -51,6 +51,14 @@
 		}
 	};
 
+	const NOMBRES_IDIOMA: Record<string, string> = {
+		en: 'English',
+		pt: 'Portuguese',
+		fr: 'French',
+		de: 'German',
+		it: 'Italian'
+	};
+
 	const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
 	function describir(paso: PasoMostrado): { texto: string; cifra: string } {
@@ -58,6 +66,12 @@
 			return {
 				texto: 'Using only what it read',
 				cifra: paso.fragmentos < 0 ? '' : plural(paso.fragmentos, 'passage', 'passages')
+			};
+		}
+		if (paso.tipo === 'traducir') {
+			return {
+				texto: `Quotes translated into ${NOMBRES_IDIOMA[paso.idioma] ?? paso.idioma}`,
+				cifra: plural(paso.citas, 'quote', 'quotes')
 			};
 		}
 		if (paso.tipo === 'verificar') {

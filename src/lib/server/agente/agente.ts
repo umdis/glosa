@@ -11,6 +11,7 @@ import {
 	type AfirmacionVerificada
 } from '../verificacion/verificar';
 import type { PasoAgente } from '../../traza';
+import { idiomaValido, traducir } from '../traduccion/traducir';
 import { DEFINICIONES, ejecutarHerramienta, type FragmentoEvidencia } from './herramientas';
 
 /**
@@ -27,6 +28,8 @@ export interface ResultadoAgente {
 	sinEvidencia: boolean;
 	pasos: number;
 	busquedas: string[];
+	/** Idioma de la pregunta (ISO 639-1), según la redacción. Las citas siguen en el original. */
+	idioma?: string;
 }
 
 export type { PasoAgente };
@@ -39,16 +42,21 @@ export interface OpcionesAgente {
 	alPaso?: (paso: PasoAgente) => void;
 }
 
+/** La lengua de las prédicas de la colección: lo que no esté en ella se traduce. */
+const IDIOMA_COLECCION = 'es';
+
 const INSTRUCCIONES_INVESTIGAR = `You are the research assistant of Glosa, a workspace over a collection of video transcripts (sermons, lectures, talks), mostly in Spanish.
 Investigate the user's question using ONLY the tools. Rules:
 - Search several times: different words, synonyms, other word forms (criar / crianza / hijos), single keywords. A paraphrase of the question will not match the transcript.
 - Before relying on a search result, read its context with leer_fragmentos.
+- The transcripts are in Spanish: search with Spanish words even when the question is in another language.
 - For Bible questions, also use pasajes.
 - Never answer from your own knowledge. If the collection does not talk about it, say so.
 - Stop searching when you have enough evidence, then reply with a short note of what you found.`;
 
 const INSTRUCCIONES_RESPONDER = `Write the answer to the question using ONLY the evidence fragments provided.
-- Answer in the language of the question.
+- Answer in the language of the question, and report that language as an ISO 639-1 code in idioma (en, es, pt...).
+- Quotes stay verbatim in the language of the transcript; never translate a quote.
 - Each claim must be supported by citations. A citation is the fragment id plus a VERBATIM quote copied from that fragment's text (at least 5 words, exactly as written, no paraphrase, no added words). Quotes may skip filler words like "eh", nothing else.
 - Do not include times or minutes anywhere.
 - If the evidence does not answer the question, return no claims and set sin_evidencia to true.
@@ -62,6 +70,7 @@ const ESQUEMA_RESPUESTA = {
 			type: 'object',
 			properties: {
 				sin_evidencia: { type: 'boolean' },
+				idioma: { type: 'string' },
 				afirmaciones: {
 					type: 'array',
 					items: {
@@ -86,7 +95,7 @@ const ESQUEMA_RESPUESTA = {
 					}
 				}
 			},
-			required: ['sin_evidencia', 'afirmaciones'],
+			required: ['sin_evidencia', 'idioma', 'afirmaciones'],
 			additionalProperties: false
 		}
 	}
@@ -165,6 +174,29 @@ export async function preguntar(
 	const propuesta = leerRespuesta(final.choices[0]?.message.content ?? '');
 	const afirmaciones = verificarAfirmaciones(db, propuesta.afirmaciones);
 	const citas = afirmaciones.flatMap((a) => a.citas);
+
+	// Solo las citas verificadas se traducen, y la traducción es ayuda: si falla, la respuesta sigue.
+	const idioma = idiomaValido(propuesta.idioma) ?? IDIOMA_COLECCION;
+	if (idioma !== IDIOMA_COLECCION) {
+		const verificadas = citas.filter((c) => c.estado === 'verificada');
+		try {
+			const traducidas = await traducir(
+				db,
+				meta,
+				verificadas.map((c) => c.frase),
+				idioma,
+				'traducir_citas'
+			);
+			for (const c of verificadas) c.traduccion = traducidas.get(c.frase);
+			alPaso({
+				tipo: 'traducir',
+				idioma,
+				citas: verificadas.filter((c) => c.traduccion).length
+			});
+		} catch (error) {
+			console.error('Falló la traducción de las citas', error);
+		}
+	}
 	alPaso({
 		tipo: 'verificar',
 		citas: citas.length,
@@ -174,6 +206,7 @@ export async function preguntar(
 		pregunta,
 		afirmaciones,
 		sinEvidencia: propuesta.sinEvidencia,
+		idioma,
 		pasos,
 		busquedas
 	};
@@ -204,9 +237,10 @@ function detallePaso(herramienta: string, argumentos: Record<string, unknown>, c
 /** Convierte la salida JSON del modelo en afirmaciones propuestas, tolerando campos de más. */
 export function leerRespuesta(contenido: string): {
 	sinEvidencia: boolean;
+	idioma?: string;
 	afirmaciones: AfirmacionPropuesta[];
 } {
-	let datos: { sin_evidencia?: unknown; afirmaciones?: unknown };
+	let datos: { sin_evidencia?: unknown; idioma?: unknown; afirmaciones?: unknown };
 	try {
 		datos = JSON.parse(contenido);
 	} catch {
@@ -224,6 +258,7 @@ export function leerRespuesta(contenido: string): {
 		}));
 	return {
 		sinEvidencia: datos.sin_evidencia === true || afirmaciones.length === 0,
+		idioma: typeof datos.idioma === 'string' ? datos.idioma.toLowerCase() : undefined,
 		afirmaciones
 	};
 }

@@ -225,5 +225,19 @@ export const migraciones: Migracion[] = [
 		creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 	);
 	CREATE INDEX bloques_investigacion ON bloques (investigacion_id, orden);
+	`,
+
+	/*
+	 * 5 — traducciones (spec idiomas-y-voz; design.md D6 de glosa-competitiva). Se guardan por el
+	 * texto original, así sirven igual para una frase citada que para un fragmento entero de los
+	 * subtítulos. Son ayuda de lectura: la evidencia es siempre el original.
+	 */ `
+	CREATE TABLE traducciones (
+		original TEXT NOT NULL,
+		idioma TEXT NOT NULL,
+		texto TEXT NOT NULL,
+		creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+		PRIMARY KEY (original, idioma)
+	);
 	`
 ];

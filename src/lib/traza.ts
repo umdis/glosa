@@ -7,6 +7,7 @@
 export type PasoAgente =
 	| { tipo: 'herramienta'; herramienta: string; detalle: string; resultados: number }
 	| { tipo: 'redactar'; fragmentos: number }
+	| { tipo: 'traducir'; idioma: string; citas: number }
 	| { tipo: 'verificar'; citas: number; verificadas: number };
 
 export type EstadoEtapa = 'pendiente' | 'activa' | 'hecha' | 'omitida' | 'sin-registro';
@@ -21,6 +22,8 @@ const ORDEN = ['buscar', 'leer', 'redactar', 'verificar'] as const;
 
 /** A qué etapa pertenece un paso. Leer el contexto es «leer»; el resto de herramientas, «buscar». */
 export function etapaDe(paso: PasoAgente): Etapa['clave'] {
+	// Traducir es parte de escribir la respuesta (Muse Spark), y ocurre antes de anunciar la verificación.
+	if (paso.tipo === 'traducir') return 'redactar';
 	if (paso.tipo !== 'herramienta') return paso.tipo;
 	return paso.herramienta === 'leer_fragmentos' ? 'leer' : 'buscar';
 }

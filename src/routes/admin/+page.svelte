@@ -326,6 +326,24 @@
 												<button type="submit" class="secundario">Retry the failed steps</button>
 											</form>
 										{/if}
+										{#if v.estado === 'listo'}
+											{@const s = v.subtitulosEn}
+											<form class="subtitulos" method="post" action="?/subtitular" use:enhance>
+												<input type="hidden" name="videoId" value={v.id} />
+												<p class="detalle" role="status">
+													English captions: {s.traducidas} of {s.total} lines{s.enCurso
+														? ', translating with Muse Spark… reload to see progress'
+														: ''}.
+												</p>
+												{#if !s.enCurso && s.traducidas < s.total}
+													<button type="submit" class="secundario"
+														>{s.traducidas
+															? 'Translate the missing lines'
+															: 'Translate captions to English'}</button
+													>
+												{/if}
+											</form>
+										{/if}
 									</div>
 								</li>
 							{/each}
