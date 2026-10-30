@@ -5,6 +5,7 @@
 	import { onMount, tick } from 'svelte';
 	import Estudio from '#lib/componentes/Estudio.svelte';
 	import Fotograma from '#lib/componentes/Fotograma.svelte';
+	import DictarPregunta from '#lib/componentes/DictarPregunta.svelte';
 	import MargenEscriba from '#lib/componentes/MargenEscriba.svelte';
 	import { folio } from '#lib/formato.js';
 	import { consultaGuardar } from '#lib/investigaciones.js';
@@ -156,6 +157,12 @@
 			/>
 			<button type="submit" disabled={pensando}>{pensando ? 'Reading…' : 'Ask'}</button>
 		</div>
+		<DictarPregunta
+			alTranscribir={(t) => {
+				texto = t;
+				campo?.focus();
+			}}
+		/>
 		{#if error}<p id="error-pregunta" class="error">{error}</p>{/if}
 		{#if data.ejemplos.length && !resultado && !pensando}
 			<div class="ejemplos">

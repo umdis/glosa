@@ -30,11 +30,11 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 
 ## 3. Cualquier idioma y voz (31-oct)
 
-- [ ] 3.1 ★ Agente responde en el idioma de la pregunta (prompt + prueba con pregunta en inglés)
-- [ ] 3.2 ★ Traducción de citas verificadas en lote, tabla `traducciones` y presentación «Translation by Muse Spark»
-- [ ] 3.3 Subtítulos en inglés por video desde `/admin` y pista `captions.vtt?lang=en`
-- [ ] 3.4 ★ Grabación en el navegador → WAV 16 kHz mono (≤30 s), estados accesibles, sin envío automático
-- [ ] 3.5 ★ `POST /api/voz` con validación del WAV, Voice Transcribe, límites y gasto
+- [x] 3.1 ★ Agente responde en el idioma de la pregunta (prompt + prueba con pregunta en inglés)
+- [x] 3.2 ★ Traducción de citas verificadas en lote, tabla `traducciones` y presentación «Translation by Muse Spark»
+- [x] 3.3 Subtítulos en inglés por video desde `/admin` y pista `captions.vtt?lang=en`
+- [x] 3.4 ★ Grabación en el navegador → WAV 16 kHz mono (≤30 s), estados accesibles, sin envío automático
+- [x] 3.5 ★ `POST /api/voz` con validación del WAV, Voice Transcribe, límites y gasto
 - [ ] 3.6 ★ Despliegue y prueba real (pregunta en inglés hablada)
 
 ## 4. Láminas con Muse Image (1-nov)
