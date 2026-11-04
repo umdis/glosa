@@ -312,6 +312,18 @@ export const migraciones: Migracion[] = [
 	 */ `
 	ALTER TABLE videos ADD COLUMN privacidad_visual INTEGER NOT NULL DEFAULT 0
 		CHECK (privacidad_visual IN (0, 1));
+	`,
+
+	/*
+	 * 8 — límite diario de WhatsApp (spec whatsapp; design.md D12). Del remitente solo un HMAC de
+	 * su número; ni el número ni el texto. Las filas de días pasados se borran al contar.
+	 */ `
+	CREATE TABLE whatsapp_uso (
+		remitente TEXT NOT NULL,
+		dia TEXT NOT NULL,
+		preguntas INTEGER NOT NULL,
+		PRIMARY KEY (remitente, dia)
+	);
 	`
 ];
 

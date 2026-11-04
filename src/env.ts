@@ -27,6 +27,22 @@ export const variables = defineEnvVars({
 		schema: topeGastoDiario,
 		description: 'Tope de gasto diario de la demo, en dólares (5 por defecto).'
 	},
+	WHATSAPP_TOKEN: {
+		schema: opcional,
+		description: 'Token de la Cloud API de WhatsApp para responder. Sin él, el webhook no responde.'
+	},
+	WHATSAPP_PHONE_NUMBER_ID: {
+		schema: opcional,
+		description: 'Id del número de WhatsApp de Glosa en la Cloud API.'
+	},
+	WHATSAPP_APP_SECRET: {
+		schema: opcional,
+		description: 'Secreto de la app de Meta: firma de los eventos y HMAC del remitente.'
+	},
+	WHATSAPP_VERIFY_TOKEN: {
+		schema: opcional,
+		description: 'Token del reto de verificación del webhook.'
+	},
 	SHOW_FRAMES: {
 		schema: mostrarFotogramas,
 		description: 'Muestra fotogramas del video (activo por defecto; «false» los apaga).'

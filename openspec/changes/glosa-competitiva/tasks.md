@@ -60,13 +60,13 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 - [x] 6.2 `Difuminador`: elección del orador y composición con ffmpeg; respaldo al minuto si falla, con pruebas — **desviaciones de D11:** se difumina la *caja* con margen del 8 % (la máscara viene en un base85 sin decodificador publicado); el orador no es la caja más grande (en un plano desde el fondo lo es el público del primer plano) sino, entre las centradas, la que empieza más arriba; sin nadie centrado se difumina a todos
 - [x] 6.3 Fotogramas y láminas difuminados con caché; interruptor por video en `/admin` con vista antes/después — caché en `medios/<video>/difuminados/`; si SAM falla o hay tope, 404 y la interfaz muestra el minuto. Las láminas no usan fotogramas (son ilustraciones), no aplica. Los fotogramas dejan de ser `immutable` (max-age 600) para que activar la privacidad no deje el original en cachés. El video completo sigue reproduciéndose tal cual, y `/admin` lo dice
 - [x] 6.4 Clips: máscaras cada 0,5 s o, si no da el tiempo/coste, clip sin imagen para videos con privacidad — sin imagen (80 llamadas por clip no compensan); verificado mirando un cuadro del clip generado
-- [ ] 6.5 Despliegue y verificación visual
+- [x] 6.5 Despliegue y verificación visual — `2175eb7` tras `respaldo-20261104-1311.db`; en producción: vista previa solo con sesión, fotograma público difuminado en 1,1 s y 18 ms desde caché; privacidad vuelta a apagar
 
 ## 7. WhatsApp (2-nov / 3-nov)
 
-- [ ] 7.1 Webhook GET (reto) y POST con verificación HMAC en tiempo constante, con pruebas de firma
-- [ ] 7.2 Procesar en segundo plano: agente, formato del mensaje con hasta 3 citas, envío por Graph API
-- [ ] 7.3 Remitente como HMAC, límite diario por número, tope de gasto, mensajes no de texto
+- [x] 7.1 Webhook GET (reto) y POST con verificación HMAC en tiempo constante, con pruebas de firma
+- [x] 7.2 Procesar en segundo plano: agente, formato del mensaje con hasta 3 citas, envío por Graph API
+- [x] 7.3 Remitente como HMAC, límite diario por número, tope de gasto, mensajes no de texto — migración 8 (whatsapp_uso: HMAC del número y día, sin número ni texto), 10 preguntas por número y día, reintentos deduplicados por id; inerte sin las variables WHATSAPP_*
 - [ ] 7.4 Configuración en Meta (con el propietario): app, número de prueba, webhook y suscripción; prueba real
 
 ## 8. YouTube (3-nov)
