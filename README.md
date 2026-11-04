@@ -23,8 +23,11 @@ General AI chat makes it worse in a quiet way: it summarizes confidently and cit
 - **Search by what was said**, across the whole collection, in Spanish (word forms and accents
   included). Results read like a Bible concordance: the word in the middle, the context around it,
   and a folio that plays the video at that moment.
-- **Ask the collection.** A research agent searches the transcripts several times with different
-  words, reads the context and answers in short claims. Each claim carries verbatim quotes.
+- **Ask the collection, in any language, typed or spoken.** A research agent searches the
+  transcripts several times with different words, reads the context and answers in short claims,
+  in the language of the question. Each claim carries verbatim quotes in the original language,
+  with a translation marked as a reading aid. You can dictate the question with Muse Voice
+  Transcribe. The agent's real steps are drawn live in the margin as it works.
 - **Verified citations.** The server checks every quote against the transcript before showing it,
   anchors it to the real minute, and marks anything it cannot find as _not found_. The model never
   writes a timestamp.
@@ -36,8 +39,25 @@ General AI chat makes it worse in a quiet way: it summarizes confidently and cit
   grieving people. Glosa hides those passages until an editor decides; they never reach search, the
   agent or the public page.
 - **AI proposes, a person decides.** Summaries and topics are drafts until an editor approves them.
-- **Write a study** from an answer: Markdown with the verified quotes linked to their moments, ready
-  to edit, download or print.
+- **Investigations.** Collect verified quotes into a study, write around them (or let Muse Spark
+  draft a section, with every quote verified again), publish a read link and export to Markdown.
+  No accounts: a private edit link is the key.
+- **Share a moment.** A 40-second vertical **clip** with burned-in captions, or an illustrated
+  **card** (Muse Image) with the verified quote, its source and a QR code that opens the exact
+  minute. A published investigation gets an illustrated cover for link previews.
+- **Series and topics.** Editors group videos into series; visitors watch them in order and can
+  ask a question that only that series can answer (quotes from other videos are rejected). Approved
+  topics become browsable tags and a search filter.
+- **Visual privacy with SAM 3.1.** Per video, frames show the congregation blurred and only the
+  speaker sharp; clips of those videos have no picture. If SAM cannot run, the original frame is
+  never served.
+- **Ask from WhatsApp.** A signed webhook takes a text question and replies with the answer and up to
+  three verified quotes, each with its minute and link. Only a one-way hash of the sender is kept,
+  for a daily limit.
+- **Linked to the original on YouTube.** Editors paste the YouTube link (title and channel by
+  oEmbed); every page and quote offers _Watch on YouTube_ at the same minute. Glosa never downloads
+  from YouTube.
+- English captions translated by Muse Spark, alongside the Spanish ones from the transcript.
 
 ## How it uses Meta's models
 
@@ -47,6 +67,10 @@ General AI chat makes it worse in a quiet way: it summarizes confidently and cit
 | **Muse Spark** (`muse-spark-1.3`) via Chat Completions with **function calling** | The research agent: `buscar`, `leer_fragmentos`, `en_pantalla`, `pasajes`, `listar_videos`.                                                                                                                                                                                                                                                                                             |
 | **Muse Spark** with **structured output** (JSON schema)                          | The final answer (claims and quotes), the sensitive-passage review, and the catalogue summary.                                                                                                                                                                                                                                                                                          |
 | **Muse Spark video understanding** via the Responses API and the **Files API**   | Reads slides and whiteboards in 10-minute segments. Files are uploaded with `expires_after` and deleted right after the analysis.                                                                                                                                                                                                                                                       |
+| **Muse Spark** translation                                                       | Translates only verified quotes (never evidence) and the English captions; cached per sentence.                                                                                                                                                                                                                                                                                         |
+| **Muse Voice Transcribe** for dictation                                          | The visitor dictates a question (16 kHz WAV recorded in the browser); the text lands in the field to review before asking.                                                                                                                                                                                                                                                              |
+| **Muse Image** (`muse-image-1.0`)                                                | Illustrations for quote cards and investigation covers, prompted from an abstract theme only: no people, faces or text.                                                                                                                                                                                                                                                                 |
+| **SAM 3.1** (`sam-3.1`) via the Responses API                                    | Finds every person in a frame. The speaker is the centred person standing highest; everyone else is blurred with ffmpeg. Cached per frame and counted in the daily cap.                                                                                                                                                                                                                 |
 
 Glosa always uses the Standard tier. Contributor mode trains on the data sent, so it is refused in
 code.
@@ -83,8 +107,12 @@ upload ─▶ ffmpeg: H.264 480p for playback + WAV 24 kHz
           ├─▶ Muse Spark: summary and topics ─▶ review queue
           └─▶ 10-min segments ─▶ Files API ─▶ Muse Spark video ─▶ text on screen + passages
 
-question ─▶ agent (Muse Spark + tools over SQLite FTS5) ─▶ structured claims with quotes
+question (web, voice or WhatsApp; optionally within a series)
+         ─▶ agent (Muse Spark + tools over SQLite FTS5) ─▶ structured claims with quotes
          ─▶ server verification against the transcript ─▶ answer with verified minutes
+         ─▶ translation of verified quotes only ─▶ investigation, clip, card
+
+frame ─▶ (visual privacy on) SAM 3.1 boxes ─▶ blur everyone but the speaker ─▶ cache
 ```
 
 - **SvelteKit 3** (Svelte 5, TypeScript) in a single container, **SQLite** with FTS5: one index by
@@ -120,6 +148,11 @@ Open `/admin`, sign in with `ADMIN_TOKEN`, and upload a video **you have permiss
 | `DAILY_SPEND_CAP_USD`         | Daily AI spending cap for the public demo (default 5) |
 | `DATA_DIR`                    | Database and media folder (`/data` in the container)  |
 | `FFMPEG_PATH`, `FFPROBE_PATH` | Optional paths to ffmpeg and ffprobe                  |
+| `SHOW_FRAMES`                 | `false` turns off video frames everywhere             |
+| `WHATSAPP_TOKEN`              | WhatsApp Cloud API token (to reply)                   |
+| `WHATSAPP_PHONE_NUMBER_ID`    | The WhatsApp number that answers                      |
+| `WHATSAPP_APP_SECRET`         | Meta app secret: event signatures and sender hash     |
+| `WHATSAPP_VERIFY_TOKEN`       | Webhook verification token                            |
 
 ## Accessibility and care
 
@@ -127,13 +160,18 @@ Open `/admin`, sign in with `ADMIN_TOKEN`, and upload a video **you have permiss
 - Keyboard-first controls, captions generated from the transcript, and `lang` set on Spanish
   content.
 - `prefers-reduced-motion` respected; reflow checked at 320 px.
-- Public visitors cannot upload or change anything. Questions are limited per visitor and by a
-  daily spending cap.
+- Every screen is checked with axe (WCAG 2.2 A/AA) in light and dark themes, locally and in
+  production, and with no horizontal scroll at 390 px.
+- Public visitors cannot upload or change anything. Questions, cards, clips, covers and WhatsApp
+  messages are limited per visitor and by a daily spending cap.
+- Visual privacy and the hidden prayer requests protect people who are not in the room.
 
 ## Status
 
-Built during the hackathon. The specification, design decisions and task list live in
-[`openspec/changes/nucleo-glosa`](openspec/changes/nucleo-glosa).
+Built during the hackathon with spec-driven development (OpenSpec). The core lives in
+[`openspec/changes/nucleo-glosa`](openspec/changes/nucleo-glosa) and the second round of features, with every
+design decision and where we deviated from it after measuring, in
+[`openspec/changes/glosa-competitiva`](openspec/changes/glosa-competitiva). 278 unit tests.
 
 ## License
 

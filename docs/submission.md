@@ -2,17 +2,25 @@
 
 Drafts for the Cerebral Valley submission form. The author reviews and edits them before sending.
 
+> ⚠️ Before sending: the WhatsApp sentences assume the real test of task 7.4 passed. If the Meta app
+> and number are not set up in time, describe it as "webhook built and tested with signed events,
+> not yet connected to a number" or remove it.
+
 ## Project description
 
 Glosa turns hours of video into searchable, citable knowledge. Pick a collection of sermons,
 lectures or talks, and Glosa transcribes it, reads what was written on screen, and lets you search
 by what was said or ask questions across the whole collection. Every answer is a set of claims with
 verbatim quotes, and every quote is checked against the transcript on the server and anchored to
-the exact minute before you see it; the model never writes a timestamp. It also builds a Scripture
-index checked against the real chapters and verses of each book, hides private information about
-people who are not there (like prayer requests for the sick) until an editor decides, and turns
-answers into studies with every quote linked to its moment. It is built for a pastor, a teacher or a
-student who needs to search, cite and teach from a mountain of video.
+the exact minute before you see it; the model never writes a timestamp. You can ask in any
+language, typed or dictated, and watch the agent's real steps in the margin as it works. Verified
+quotes become investigations you can publish, 40-second captioned clips, or illustrated cards with
+a QR code to the minute. Editors group videos into series you can question on their own, and
+approved topics become tags. It also builds a Scripture index checked against the real chapters
+and verses, hides prayer requests about sick or grieving people until an editor decides, and blurs
+the congregation in frames with SAM 3.1 so only the speaker is visible. Questions also work from
+WhatsApp, and every quote can open the original on YouTube at the same minute. It is built for a
+pastor, a teacher or a student who needs to search, cite and teach from a mountain of video.
 
 ## Describe your use of Meta products to build the submitted project
 
@@ -28,6 +36,15 @@ student who needs to search, cite and teach from a mountain of video.
   video's summary and topics for human approval.
 - **Muse Spark video understanding with the Files API** (Responses API) reads slides and whiteboards
   in 10-minute segments. Files are uploaded with `expires_after` and deleted after the analysis.
+- **Muse Spark translation** answers in the language of the question and translates only the quotes
+  that passed verification, plus English captions. The original stays as the evidence.
+- **Muse Voice Transcribe** also takes dictated questions from the browser.
+- **Muse Image** draws the illustration of quote cards and investigation covers, from an abstract
+  theme only (no people, faces or text); ffmpeg composes the quote, source and QR code.
+- **SAM 3.1** finds every person in a frame. We pick the speaker (the centred person standing
+  highest) and blur everyone else; cached per frame and counted in the daily spending cap.
+- **WhatsApp Cloud API** (Graph API) receives questions through a signed webhook and sends back the
+  answer with up to three verified quotes and links.
 - We used the Standard tier only; contributor mode is refused in code because the content belongs to
   a congregation.
 
@@ -39,8 +56,11 @@ and reason over a long collection, with structured output we can verify. And it 
 can watch the video, because slides and whiteboards carry the outline of a sermon. Muse Spark
 reading the screen gave us second-accurate moments for what was written, which is something no
 transcript can recover. And the 1M-token context means a collection's transcripts fit when the agent
-needs to read widely. Having all of it behind one OpenAI-compatible API let one person build the
-whole pipeline in days.
+needs to read widely. SAM 3.1 lets us protect the people in the pews, who never agreed to be on a
+public site, without giving up the frames that show the slides. Muse Image turns a verified quote
+into something people actually share, and WhatsApp puts the archive where the congregation already
+talks. Having all of it behind one OpenAI-compatible API let one person build the whole pipeline in
+days.
 
 ## Feedback from your experience using Meta products
 
@@ -58,6 +78,12 @@ whole pipeline in days.
 - There is no embeddings model in the API; we designed around lexical search plus an agent, but
   embeddings would help paraphrase search.
 - Muse Code defaults to contributor mode. A clearer warning would help when it opens client code.
+- SAM 3.1 was fast (1–2 s per 640 px frame) and found 21 people in a crowded synthetic test scene. The
+  mask payload is a custom base85 encoding without a published decoder, so we blur by box; a small
+  reference decoder in the docs would let developers use the pixel-accurate masks.
+- SAM's `usage` reports `images_processed` and zero tokens, which made per-frame cost accounting easy.
+- Muse Image returns 1280×1920 when asked for `1024x1536`; documenting the real output sizes would
+  help layout code.
 
 ## Provide feedback from your experience using partner technologies
 

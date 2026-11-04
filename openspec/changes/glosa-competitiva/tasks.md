@@ -76,7 +76,7 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 
 ## 9. Cierre
 
-- [ ] 9.1 ★ README y `docs/submission.md` actualizados con las capacidades nuevas y los modelos usados
-- [ ] 9.2 ★ Guion del video ajustado al flujo nuevo (preguntar en inglés por voz → investigación → lámina/clip)
-- [ ] 9.3 ★ Accesibilidad: recorrido de teclado y prueba con lector de pantalla de las pantallas nuevas
+- [x] 9.1 ★ README y `docs/submission.md` actualizados con las capacidades nuevas y los modelos usados — README (capacidades, modelos, variables, accesibilidad, estado) y borrador de entrega con aviso sobre WhatsApp
+- [x] 9.2 ★ Guion del video ajustado al flujo nuevo (preguntar en inglés por voz → investigación → lámina/clip) — 2:55 con checklist (fichas aprobadas y una serie en producción, WhatsApp condicionado a 7.4, escena de SAM rotulada como sintética)
+- [x] 9.3 ★ Accesibilidad: recorrido de teclado y prueba con lector de pantalla de las pantallas nuevas — teclado real por CDP (serie: saltar, preguntar y Enter; búsqueda: tema con lista + «Filter», sin cambio automático; temas), foco visible siempre, encabezados en orden y ningún control sin nombre; axe 0 en todas las pantallas nuevas. **Pendiente del propietario: prueba con NVDA real**
 - [ ] 9.4 ★ Actualizar `D:\Proyectos\Agent\projects\Glosa.md` y la bitácora
