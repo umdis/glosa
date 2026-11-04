@@ -47,11 +47,11 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 
 ## 5. Series y etiquetas (1-nov / 2-nov)
 
-- [ ] 5.1 Esquema `series`, `series_videos`, `etiquetas`, `video_etiquetas`; migración de temas ya aprobados
-- [ ] 5.2 Gestión de series en `/admin` y página pública `/series` y `/series/[id]`
-- [ ] 5.3 Ámbito de serie en las herramientas del agente y rechazo de citas fuera de ámbito, con pruebas
-- [ ] 5.4 Resumen compilado de serie como pendiente en la cola de revisión
-- [ ] 5.5 Página `/topics`, filtro por etiqueta en la búsqueda y fusión de etiquetas en `/admin`
+- [x] 5.1 Esquema `series`, `series_videos`, `etiquetas`, `video_etiquetas`; migración de temas ya aprobados — migración 6; además `etiquetas_alias` para que un tema fusionado no resucite al volver a aprobarse
+- [x] 5.2 Gestión de series en `/admin` y página pública `/series` y `/series/[id]` — también en la portada y en la navegación («Series & topics»)
+- [x] 5.3 Ámbito de serie en las herramientas del agente y rechazo de citas fuera de ámbito, con pruebas — `/ask?serie=`; la respuesta guardada se indexa por serie y se vuelve a filtrar si la serie pierde un video
+- [x] 5.4 Resumen compilado de serie como pendiente en la cola de revisión — **desviación de D9:** tabla propia `series_resumenes` en vez de `pendientes` (esa exige `video_id` y un CHECK de tipo; rehacerla con datos de producción no compensaba). Sale en la misma cola de `/admin`
+- [x] 5.5 Página `/topics` (y `/topics/[slug]`), filtro por etiqueta en la búsqueda (`?tag=`, GET con botón) y fusión de etiquetas en `/admin` — verificado en la demo: 251 pruebas, axe 0 en 8 pantallas × 2 temas, sin desborde a 390 px (se arregló de paso el que ya tenía `/admin`)
 - [ ] 5.6 Despliegue y verificación
 
 ## 6. Privacidad visual con SAM 3.1 (2-nov)

@@ -4,6 +4,7 @@ import { notaEspecimen } from '#lib/server/especimen.js';
 import { segundoPoster } from '#lib/server/fotogramas.js';
 import { fichaAprobada } from '#lib/server/revision/resumen.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import { listarSeries } from '#lib/server/series/series.js';
 import { listarVideos } from '#lib/server/videos.js';
 import type { PageServerLoad } from './$types';
 
@@ -63,6 +64,7 @@ export const load: PageServerLoad = () => {
 
 	return {
 		videos: coleccion,
+		series: listarSeries(db).map((s) => ({ id: s.id, nombre: s.nombre, videos: s.videos.length })),
 		ejemplos: sugerencias.slice(0, 3).map((s) => `What was said about ${s}?`),
 		cifras: {
 			videos: videos.length,

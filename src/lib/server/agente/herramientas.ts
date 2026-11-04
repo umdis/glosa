@@ -96,13 +96,19 @@ export const DEFINICIONES: DefinicionHerramienta[] = [
 
 type Argumentos = Record<string, unknown>;
 
-/** Ejecuta una herramienta. Devuelve JSON para el modelo y registra la evidencia vista. */
+/**
+ * Ejecuta una herramienta. Devuelve JSON para el modelo y registra la evidencia vista.
+ * Con `ambito` (los videos de una serie), nada fuera de esos videos existe para el agente
+ * (design.md D9): ni se lista, ni se encuentra, ni se puede leer.
+ */
 export function ejecutarHerramienta(
 	db: Base,
 	nombre: string,
 	argumentos: Argumentos,
-	evidencia: Map<number, FragmentoEvidencia>
+	evidencia: Map<number, FragmentoEvidencia>,
+	ambito?: ReadonlySet<string>
 ): string {
+	const dentro = (videoId: string) => !ambito || ambito.has(videoId);
 	const registrar = (fragmentos: FragmentoEvidencia[]) => {
 		for (const f of fragmentos) evidencia.set(f.fragmento_id, f);
 		return fragmentos;
@@ -117,12 +123,17 @@ export function ejecutarHerramienta(
 						 WHERE EXISTS (SELECT 1 FROM fragmentos f WHERE f.video_id = v.id AND f.visibilidad = 'visible')`
 					)
 					.all()
+					.filter((v) => dentro((v as { video_id: string }).video_id))
 			);
 
 		case 'buscar': {
 			const consulta = String(argumentos.consulta ?? '').slice(0, 200);
 			const videoId = typeof argumentos.video_id === 'string' ? argumentos.video_id : undefined;
-			const resultados = buscar(db, consulta, { limite: 12, videoId }).map((r) => ({
+			const resultados = buscar(db, consulta, {
+				limite: 12,
+				videoId,
+				videoIds: ambito ? [...ambito] : undefined
+			}).map((r) => ({
 				fragmento_id: r.fragmentoId,
 				video_id: r.videoId,
 				video: r.titulo,
@@ -139,7 +150,8 @@ export function ejecutarHerramienta(
 			const centro = db
 				.prepare(`SELECT video_id, orden FROM fragmentos WHERE id = ? AND visibilidad = 'visible'`)
 				.get(id) as { video_id: string; orden: number } | undefined;
-			if (!centro) return JSON.stringify({ error: 'Fragment not found' });
+			if (!centro || !dentro(centro.video_id))
+				return JSON.stringify({ error: 'Fragment not found' });
 			const filas = db
 				.prepare(
 					`SELECT f.id AS fragmento_id, f.video_id, v.titulo AS video, f.texto
@@ -157,6 +169,7 @@ export function ejecutarHerramienta(
 
 		case 'en_pantalla': {
 			const videoId = String(argumentos.video_id ?? '');
+			if (!dentro(videoId)) return JSON.stringify({ sin_resultados: true });
 			const filas = db
 				.prepare(
 					`SELECT p.texto AS en_pantalla,
@@ -191,7 +204,9 @@ export function ejecutarHerramienta(
 					texto: string | null;
 				}
 			>;
-			const visibles = filas.filter((f) => f.fragmento_id === null || f.texto !== null);
+			const visibles = filas.filter(
+				(f) => dentro(f.video_id) && (f.fragmento_id === null || f.texto !== null)
+			);
 			for (const f of visibles) {
 				if (f.fragmento_id !== null && f.texto !== null) {
 					evidencia.set(f.fragmento_id, {

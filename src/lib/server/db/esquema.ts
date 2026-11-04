@@ -239,5 +239,100 @@ export const migraciones: Migracion[] = [
 		creada_en TEXT NOT NULL DEFAULT (datetime('now')),
 		PRIMARY KEY (original, idioma)
 	);
-	`
+	`,
+
+	/*
+	 * 6 — series y etiquetas (spec series-y-etiquetas; design.md D9–D10 de glosa-competitiva).
+	 * El resumen de serie va en su propia tabla y no en `pendientes`: esa exige un video y un tipo
+	 * fijo por CHECK, y rehacerla con datos de producción dentro no compensa. La cola de `/admin`
+	 * muestra las dos. Las etiquetas nacen de los temas ya aprobados.
+	 */
+	(db) => {
+		db.exec(`
+		CREATE TABLE series (
+			id TEXT PRIMARY KEY,
+			nombre TEXT NOT NULL,
+			descripcion TEXT NOT NULL DEFAULT '',
+			creada_en TEXT NOT NULL DEFAULT (datetime('now'))
+		);
+		CREATE TABLE series_videos (
+			serie_id TEXT NOT NULL REFERENCES series(id) ON DELETE CASCADE,
+			video_id TEXT NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+			orden INTEGER NOT NULL DEFAULT 0,
+			PRIMARY KEY (serie_id, video_id)
+		);
+		CREATE TABLE series_resumenes (
+			id INTEGER PRIMARY KEY,
+			serie_id TEXT NOT NULL REFERENCES series(id) ON DELETE CASCADE,
+			contenido TEXT NOT NULL,
+			estado TEXT NOT NULL DEFAULT 'pendiente'
+				CHECK (estado IN ('pendiente', 'aprobado', 'oculto')),
+			decidido_por TEXT,
+			decidido_en TEXT,
+			creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+		);
+		CREATE TABLE etiquetas (
+			id INTEGER PRIMARY KEY,
+			nombre TEXT NOT NULL,
+			slug TEXT NOT NULL UNIQUE
+		);
+		CREATE TABLE video_etiquetas (
+			video_id TEXT NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+			etiqueta_id INTEGER NOT NULL REFERENCES etiquetas(id) ON DELETE CASCADE,
+			PRIMARY KEY (video_id, etiqueta_id)
+		);
+		CREATE INDEX video_etiquetas_etiqueta ON video_etiquetas (etiqueta_id);
+		-- Al fusionar, el slug absorbido apunta a la etiqueta que queda: un tema aprobado después
+		-- con ese nombre no la resucita.
+		CREATE TABLE etiquetas_alias (
+			slug TEXT PRIMARY KEY,
+			etiqueta_id INTEGER NOT NULL REFERENCES etiquetas(id) ON DELETE CASCADE
+		);
+		`);
+		const aprobados = db
+			.prepare(
+				`SELECT video_id, contenido FROM pendientes
+				 WHERE tipo = 'temas' AND estado = 'aprobado' ORDER BY decidido_en`
+			)
+			.all() as Array<{ video_id: string; contenido: string }>;
+		for (const fila of aprobados) {
+			let temas: unknown;
+			try {
+				temas = JSON.parse(fila.contenido);
+			} catch {
+				continue;
+			}
+			if (Array.isArray(temas)) etiquetarVideo(db, fila.video_id, temas.map(String));
+		}
+	}
 ];
+
+/** Convierte un tema en slug: sin tildes ni mayúsculas, palabras unidas por guiones. */
+export function slugEtiqueta(nombre: string): string {
+	return normalizar(nombre).split(' ').filter(Boolean).join('-').slice(0, 60);
+}
+
+/**
+ * Sustituye las etiquetas de un video por las de sus temas aprobados. Temas equivalentes
+ * («Perdón», «perdon») caen en la misma etiqueta por el slug.
+ */
+export function etiquetarVideo(db: Database.Database, videoId: string, temas: string[]): void {
+	db.prepare(`DELETE FROM video_etiquetas WHERE video_id = ?`).run(videoId);
+	const crear = db.prepare(
+		`INSERT INTO etiquetas (nombre, slug) VALUES (?, ?) ON CONFLICT (slug) DO NOTHING`
+	);
+	const alias = db.prepare(`SELECT etiqueta_id AS id FROM etiquetas_alias WHERE slug = ?`);
+	const buscar = db.prepare(`SELECT id FROM etiquetas WHERE slug = ?`);
+	const unir = db.prepare(
+		`INSERT OR IGNORE INTO video_etiquetas (video_id, etiqueta_id) VALUES (?, ?)`
+	);
+	for (const tema of temas) {
+		const nombre = tema.trim().slice(0, 60);
+		const slug = slugEtiqueta(nombre);
+		if (!slug) continue;
+		const absorbida = alias.get(slug) as { id: number } | undefined;
+		if (!absorbida) crear.run(nombre, slug);
+		const { id } = absorbida ?? (buscar.get(slug) as { id: number });
+		unir.run(videoId, id);
+	}
+}

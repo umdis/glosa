@@ -65,7 +65,7 @@
 			const respuesta = await fetch(resolve('/ask/stream'), {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ pregunta })
+				body: JSON.stringify({ pregunta, serie: data.serie?.id })
 			});
 			if (!respuesta.ok || !respuesta.body) throw new Error(`HTTP ${respuesta.status}`);
 			const lector = respuesta.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -129,19 +129,41 @@
 </script>
 
 <svelte:head>
-	<title>{resultado ? `${resultado.pregunta} — Glosa` : 'Ask the collection — Glosa'}</title>
+	<title
+		>{resultado
+			? `${resultado.pregunta} — Glosa`
+			: data.serie
+				? `Ask the series ${data.serie.nombre} — Glosa`
+				: 'Ask the collection — Glosa'}</title
+	>
 </svelte:head>
 
 <div class="pagina">
 	<header class="encabezado">
-		<h1>Ask the collection</h1>
-		<p class="nota">
-			A Muse Spark agent reads the transcripts and answers with quotes. Glosa checks every quote
-			against what was actually said before you see it.
-		</p>
+		{#if data.serie}
+			<h1>Ask the series <span lang="es">“{data.serie.nombre}”</span></h1>
+			<p class="nota">
+				A Muse Spark agent reads only the videos of this series and answers with quotes. Glosa
+				checks every quote, and rejects any that comes from outside the series.
+				<a href={resolve('/series/[id]', { id: data.serie.id })}>Back to the series</a> ·
+				<a href={resolve('/ask')}>Ask the whole collection</a>
+			</p>
+		{:else}
+			<h1>Ask the collection</h1>
+			<p class="nota">
+				A Muse Spark agent reads the transcripts and answers with quotes. Glosa checks every quote
+				against what was actually said before you see it.
+			</p>
+			{#if data.serieDesconocida}
+				<p class="aviso" role="alert">
+					That series does not exist any more, so this question goes to the whole collection.
+				</p>
+			{/if}
+		{/if}
 	</header>
 
 	<form class="compositor tarjeta" method="post" bind:this={formulario} onsubmit={enviar}>
+		{#if data.serie}<input type="hidden" name="serie" value={data.serie.id} />{/if}
 		<label for="pregunta">Your question</label>
 		<div class="fila">
 			<input

@@ -140,6 +140,21 @@
 
 	<section class="coleccion" aria-labelledby="t-coleccion">
 		<h2 id="t-coleccion">The collection</h2>
+		{#if data.series.length}
+			<div class="series">
+				<h3 id="t-series-portada">Series</h3>
+				<ul aria-labelledby="t-series-portada">
+					{#each data.series as s (s.id)}
+						<li>
+							<a class="chip" href={resolve('/series/[id]', { id: s.id })}
+								><span lang="es">{s.nombre}</span>
+								<span class="cuantos">{plural(s.videos, 'video', 'videos')}</span></a
+							>
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
 		{#if data.videos.length === 0}
 			<p class="vacio">
 				No videos yet. Once a video is uploaded in the editor and transcribed, it appears here.
@@ -446,6 +461,32 @@
 	/* ── Colección ── */
 	.coleccion {
 		margin-top: var(--e-16);
+	}
+
+	.series {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--e-3);
+		margin-bottom: var(--e-6);
+	}
+
+	.series h3 {
+		font-size: var(--t-1);
+	}
+
+	.series ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--e-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.series .cuantos {
+		color: var(--suave);
+		font-size: var(--t-0);
 	}
 
 	h2 {

@@ -1,5 +1,6 @@
 import { olvidarRespuestas } from '../agente/limites';
 import type { Base } from '../db/base';
+import { etiquetarVideo } from '../db/esquema';
 
 export type Decision = 'aprobado' | 'oculto';
 
@@ -36,8 +37,11 @@ export function listarPendientes(db: Base): ElementoPendiente[] {
  */
 export function decidir(db: Base, id: number, decision: Decision, quien: string): boolean {
 	const elemento = db
-		.prepare(`SELECT tipo, fragmento_id FROM pendientes WHERE id = ? AND estado = 'pendiente'`)
-		.get(id) as { tipo: string; fragmento_id: number | null } | undefined;
+		.prepare(
+			`SELECT tipo, video_id, fragmento_id, contenido FROM pendientes WHERE id = ? AND estado = 'pendiente'`
+		)
+		.get(id) as
+		{ tipo: string; video_id: string; fragmento_id: number | null; contenido: string } | undefined;
 	if (!elemento) return false;
 	db.transaction(() => {
 		db.prepare(
@@ -49,6 +53,16 @@ export function decidir(db: Base, id: number, decision: Decision, quien: string)
 				elemento.fragmento_id
 			);
 			olvidarRespuestas(db);
+		}
+		// Los temas aprobados son las etiquetas del video (design.md D10).
+		if (elemento.tipo === 'temas' && decision === 'aprobado') {
+			let temas: unknown = [];
+			try {
+				temas = JSON.parse(elemento.contenido);
+			} catch {
+				// Contenido corrupto: el video se queda sin etiquetas nuevas.
+			}
+			if (Array.isArray(temas)) etiquetarVideo(db, elemento.video_id, temas.map(String));
 		}
 	})();
 	return true;

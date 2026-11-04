@@ -4,6 +4,7 @@ import { referencia } from '#lib/formato.js';
 import { indicePublico } from '#lib/server/biblia/indice.js';
 import { fichaAprobada } from '#lib/server/revision/resumen.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import { obtenerSerie } from '#lib/server/series/series.js';
 import { listarVideos } from '#lib/server/videos.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -11,22 +12,35 @@ import type { Actions, PageServerLoad } from './$types';
  * Preguntas de ejemplo armadas con datos de la colección (temas aprobados y pasajes dichos).
  * Nunca con las preguntas guardadas: serían las de otros visitantes.
  */
-export const load: PageServerLoad = () => {
+export const load: PageServerLoad = ({ url }) => {
 	const { db } = obtenerServicios();
+	// `?serie=` acota la pregunta a esa serie (spec series-y-etiquetas). Si no existe, se avisa.
+	const pedida = url.searchParams.get('serie');
+	const encontrada = pedida ? obtenerSerie(db, pedida) : undefined;
+	const serie = encontrada ? { id: encontrada.id, nombre: encontrada.nombre } : null;
 	const temas = listarVideos(db).flatMap((v) => fichaAprobada(db, v.id).temas);
 	const pasajes = indicePublico(db)
 		.flatMap((l) => l.pasajes)
 		.filter((p) => p.versiculoInicio !== null && p.momentos.some((m) => m.origen === 'dicho'))
 		.map(referencia);
 	const temasUnicos = [...new Set([...temas, ...pasajes])];
-	return { ejemplos: temasUnicos.slice(0, 3).map((t) => `What was said about ${t}?`) };
+	return {
+		ejemplos: temasUnicos.slice(0, 3).map((t) => `What was said about ${t}?`),
+		serie,
+		serieDesconocida: Boolean(pedida && !encontrada)
+	};
 };
 
 export const actions: Actions = {
 	/** Pregunta a la colección. Es POST: cada pregunta cuesta y no debe dispararla un rastreador. */
 	default: async ({ request, getClientAddress }) => {
 		const formulario = await request.formData();
-		const atencion = await atenderPregunta(formulario.get('pregunta'), getClientAddress());
+		const atencion = await atenderPregunta(
+			formulario.get('pregunta'),
+			getClientAddress(),
+			undefined,
+			formulario.get('serie') ?? undefined
+		);
 		if (!atencion.ok) {
 			return fail(atencion.estado, { pregunta: atencion.pregunta, error: atencion.error });
 		}

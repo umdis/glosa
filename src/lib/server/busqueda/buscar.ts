@@ -37,7 +37,12 @@ const COLUMNAS = `f.id, f.video_id, v.titulo, f.inicio_ms, f.fin_ms, f.texto`;
 export function buscar(
 	db: Base,
 	consulta: string,
-	opciones: { limite?: number; videoId?: string } = {}
+	opciones: {
+		limite?: number;
+		videoId?: string;
+		/** Ámbito: solo estos videos (una serie o una etiqueta). Una lista vacía no encuentra nada. */
+		videoIds?: string[];
+	} = {}
 ): Resultado[] {
 	const limite = opciones.limite ?? 40;
 	const raices = [...new Set(textoARaices(consulta).split(' ').filter(Boolean))];
@@ -50,7 +55,11 @@ export function buscar(
 	];
 	if (raices.length === 0 && parciales.length === 0) return [];
 
-	const filtroVideo = opciones.videoId ? 'AND f.video_id = @videoId' : '';
+	if (opciones.videoIds && opciones.videoIds.length === 0) return [];
+	const filtroVideo =
+		(opciones.videoId ? 'AND f.video_id = @videoId ' : '') +
+		(opciones.videoIds ? 'AND f.video_id IN (SELECT value FROM json_each(@videoIds))' : '');
+	const videoIds = opciones.videoIds ? JSON.stringify(opciones.videoIds) : null;
 	const resultados: Resultado[] = [];
 	const vistos = new Set<number>();
 
@@ -63,7 +72,12 @@ export function buscar(
 				 WHERE fragmentos_raices MATCH @consulta AND f.visibilidad = 'visible' ${filtroVideo}
 				 ORDER BY bm25(fragmentos_raices) LIMIT @limite`
 			)
-			.all({ consulta: consultaFts(raices), videoId: opciones.videoId, limite }) as Fila[];
+			.all({
+				consulta: consultaFts(raices),
+				videoId: opciones.videoId,
+				videoIds,
+				limite
+			}) as Fila[];
 		for (const fila of filas) {
 			vistos.add(fila.id);
 			resultados.push(aResultado(fila, raices, parciales, 'raiz'));
@@ -79,7 +93,12 @@ export function buscar(
 				 WHERE fragmentos_trigramas MATCH @consulta AND f.visibilidad = 'visible' ${filtroVideo}
 				 ORDER BY bm25(fragmentos_trigramas) LIMIT @limite`
 			)
-			.all({ consulta: consultaFts(parciales), videoId: opciones.videoId, limite }) as Fila[];
+			.all({
+				consulta: consultaFts(parciales),
+				videoId: opciones.videoId,
+				videoIds,
+				limite
+			}) as Fila[];
 		for (const fila of filas) {
 			if (vistos.has(fila.id) || resultados.length >= limite) continue;
 			resultados.push(aResultado(fila, raices, parciales, 'trigrama'));

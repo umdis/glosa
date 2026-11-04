@@ -180,7 +180,7 @@
 		<div class="columnas">
 			<section class="revisar" aria-labelledby="t-revisar">
 				<h2 id="t-revisar">To review</h2>
-				{#if sensibles.length === 0 && fichas.length === 0}
+				{#if sensibles.length === 0 && fichas.length === 0 && data.resumenesSerie.length === 0}
 					<p class="nota">Nothing waits for a decision.</p>
 				{/if}
 
@@ -230,6 +230,28 @@
 								</blockquote>
 								<form method="post" action="?/decidir" use:enhance class="decision">
 									<input type="hidden" name="id" value={p.id} />
+									<button name="decision" value="aprobado" type="submit">Approve</button>
+									<button name="decision" value="oculto" type="submit" class="secundario"
+										>Discard</button
+									>
+								</form>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+
+				{#if data.resumenesSerie.length}
+					<h3>Series overviews drafted by AI ({data.resumenesSerie.length})</h3>
+					<ul class="cola">
+						{#each data.resumenesSerie as r (r.id)}
+							<li class="tarjeta">
+								<p class="contexto">
+									<span lang="es">{r.nombre}</span>
+									<span class="insignia">series overview</span>
+								</p>
+								<blockquote lang="es">{r.contenido}</blockquote>
+								<form method="post" action="?/decidirResumenSerie" use:enhance class="decision">
+									<input type="hidden" name="id" value={r.id} />
 									<button name="decision" value="aprobado" type="submit">Approve</button>
 									<button name="decision" value="oculto" type="submit" class="secundario"
 										>Discard</button
@@ -378,10 +400,188 @@
 				</section>
 			</div>
 		</div>
+
+		<section class="series" aria-labelledby="t-series">
+			<h2 id="t-series">Series</h2>
+			<p class="nota">
+				Group videos so visitors can watch them in order and ask questions that only those videos
+				answer.
+			</p>
+			<form method="post" action="?/crearSerie" use:enhance class="nueva-serie">
+				<label for="nueva-nombre">New series</label>
+				<input id="nueva-nombre" name="nombre" type="text" required maxlength="80" />
+				<label for="nueva-descripcion">Description (optional)</label>
+				<textarea id="nueva-descripcion" name="descripcion" rows="2" maxlength="600"></textarea>
+				<button type="submit">Create the series</button>
+			</form>
+
+			{#each data.series as s (s.id)}
+				<details class="serie tarjeta">
+					<summary
+						><span lang="es">{s.nombre}</span>
+						<span class="nota">{s.videoIds.length} videos</span></summary
+					>
+					<form method="post" action="?/guardarSerie" use:enhance class="editar-serie">
+						<input type="hidden" name="id" value={s.id} />
+						<label for="nombre-{s.id}">Name</label>
+						<input
+							id="nombre-{s.id}"
+							name="nombre"
+							type="text"
+							required
+							maxlength="80"
+							value={s.nombre}
+						/>
+						<label for="descripcion-{s.id}">Description</label>
+						<textarea id="descripcion-{s.id}" name="descripcion" rows="2" maxlength="600"
+							>{s.descripcion}</textarea
+						>
+						<fieldset>
+							<legend>Videos in this series, with their part number</legend>
+							<ul class="eleccion">
+								{#each data.videos as v (v.id)}
+									{@const posicion = s.videoIds.indexOf(v.id)}
+									<li>
+										<input
+											id="v-{s.id}-{v.id}"
+											type="checkbox"
+											name="video"
+											value={v.id}
+											checked={posicion >= 0}
+										/>
+										<label for="v-{s.id}-{v.id}" lang="es">{v.titulo}</label>
+										<label class="parte"
+											>Part <input
+												type="number"
+												name="parte-{v.id}"
+												min="1"
+												max="99"
+												value={posicion >= 0 ? posicion + 1 : ''}
+											/><span class="solo-lector"> of {v.titulo}</span></label
+										>
+									</li>
+								{/each}
+							</ul>
+						</fieldset>
+						<button type="submit">Save the series</button>
+					</form>
+					<div class="acciones-serie">
+						<form method="post" action="?/resumirSerie" use:enhance>
+							<input type="hidden" name="id" value={s.id} />
+							<button type="submit" class="secundario"
+								>{s.tieneResumen ? 'Draft a new overview' : 'Draft an overview'} with Muse Spark</button
+							>
+						</form>
+						<a href={resolve('/series/[id]', { id: s.id })}>Open the public page</a>
+						<form method="post" action="?/borrarSerie" use:enhance>
+							<input type="hidden" name="id" value={s.id} />
+							<button type="submit" class="secundario"
+								>Delete<span class="solo-lector"> the series {s.nombre}</span></button
+							>
+						</form>
+					</div>
+				</details>
+			{/each}
+		</section>
+
+		<section class="temas" aria-labelledby="t-temas">
+			<h2 id="t-temas">Topics</h2>
+			<p class="nota">
+				Topics come from the summaries you approve. Merge two that mean the same: the first one
+				disappears and its videos move to the second. A future summary that proposes the merged name
+				lands on the second too.
+			</p>
+			{#if data.etiquetas.length < 2}
+				<p class="nota">There are not two topics to merge yet.</p>
+			{:else}
+				<form method="post" action="?/fusionarEtiquetas" use:enhance class="fusionar">
+					<label for="absorbida">Merge</label>
+					<select id="absorbida" name="absorbida" required>
+						{#each data.etiquetas as e (e.id)}
+							<option value={e.id} lang="es">{e.nombre} ({e.usos})</option>
+						{/each}
+					</select>
+					<label for="destino">into</label>
+					<select id="destino" name="destino" required>
+						{#each data.etiquetas as e (e.id)}
+							<option value={e.id} lang="es">{e.nombre} ({e.usos})</option>
+						{/each}
+					</select>
+					<button type="submit">Merge</button>
+				</form>
+			{/if}
+		</section>
 	{/if}
 </div>
 
 <style>
+	.series,
+	.temas {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--e-4);
+		margin-top: var(--e-12);
+	}
+
+	.nueva-serie,
+	.editar-serie {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--e-2);
+		max-width: 40rem;
+	}
+
+	.serie {
+		padding: var(--e-4) var(--e-6);
+	}
+
+	.serie summary {
+		cursor: pointer;
+		font-weight: 700;
+		min-height: 1.5rem;
+	}
+
+	.serie[open] summary {
+		margin-bottom: var(--e-4);
+	}
+
+	.eleccion {
+		display: grid;
+		gap: var(--e-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.eleccion li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--e-2);
+	}
+
+	.eleccion input[type='checkbox'] {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+
+	.parte input {
+		width: 4.5rem;
+	}
+
+	.acciones-serie,
+	.fusionar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--e-3);
+		margin-top: var(--e-4);
+	}
+
+	.fusionar select {
+		max-width: 100%;
+	}
+
 	.pagina {
 		max-width: 76rem;
 		margin: 0 auto;
@@ -491,12 +691,15 @@
 
 	.columnas {
 		display: grid;
+		/* Sin esto, la pista toma el ancho mínimo del contenido y la página desborda a 390 px. */
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--e-12);
 		margin-top: var(--e-8);
 	}
 
 	.lateral {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--e-12);
 		align-content: start;
 	}
@@ -544,6 +747,8 @@
 	/* ── Subida ── */
 	.zona {
 		display: grid;
+		/* El selector de archivo tiene ancho propio: sin esto empuja la página a 390 px. */
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--e-2);
 		padding: var(--e-6) var(--e-4);
 		border: 1.5px dashed var(--suave);

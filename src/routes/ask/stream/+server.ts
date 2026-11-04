@@ -8,8 +8,9 @@ import type { RequestHandler } from './$types';
  */
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	let pregunta: unknown;
+	let serie: unknown;
 	try {
-		pregunta = ((await request.json()) as { pregunta?: unknown }).pregunta;
+		({ pregunta, serie } = (await request.json()) as { pregunta?: unknown; serie?: unknown });
 	} catch {
 		pregunta = '';
 	}
@@ -20,8 +21,11 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 		async start(control) {
 			const enviar = (mensaje: object) =>
 				control.enqueue(codificar.encode(`${JSON.stringify(mensaje)}\n`));
-			const atencion = await atenderPregunta(pregunta, visitante, (paso) =>
-				enviar({ tipo: 'paso', paso })
+			const atencion = await atenderPregunta(
+				pregunta,
+				visitante,
+				(paso) => enviar({ tipo: 'paso', paso }),
+				serie
 			);
 			enviar(
 				atencion.ok

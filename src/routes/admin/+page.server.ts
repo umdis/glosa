@@ -6,6 +6,18 @@ import { segundoPoster } from '#lib/server/fotogramas.js';
 import { listarPublicadas, retirar } from '#lib/server/investigaciones/datos.js';
 import { decidir, listarPendientes, type Decision } from '#lib/server/revision/decisiones.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import { fusionarEtiquetas, todasLasEtiquetas } from '#lib/server/series/etiquetas.js';
+import {
+	asignarVideos,
+	borrarSerie,
+	crearSerie,
+	decidirResumenSerie,
+	editarSerie,
+	idsDeSerie,
+	listarSeries,
+	proponerResumenSerie,
+	resumenesPendientes
+} from '#lib/server/series/series.js';
 import {
 	avanceSubtitulos,
 	subtitular,
@@ -48,6 +60,15 @@ export const load: PageServerLoad = ({ request, cookies }) => {
 		})),
 		pendientes: listarPendientes(db),
 		publicadas: listarPublicadas(db),
+		series: listarSeries(db, { conVacias: true }).map((s) => ({
+			id: s.id,
+			nombre: s.nombre,
+			descripcion: s.descripcion,
+			videoIds: idsDeSerie(db, s.id),
+			tieneResumen: s.resumen !== null
+		})),
+		resumenesSerie: resumenesPendientes(db),
+		etiquetas: todasLasEtiquetas(db),
 		gastoHoy,
 		topeAlcanzado: topeAlcanzado()
 	};
@@ -119,6 +140,98 @@ export const actions: Actions = {
 		if (topeAlcanzado()) return fail(429, { error: 'The daily spending cap was reached.' });
 		subtitular(db, meta, videoId, 'en');
 		return { subtitulando: videoId };
+	},
+
+	/** Crea una serie (spec series-y-etiquetas). */
+	crearSerie: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const formulario = await request.formData();
+		const serie = crearSerie(
+			obtenerServicios().db,
+			String(formulario.get('nombre') ?? ''),
+			String(formulario.get('descripcion') ?? '')
+		);
+		if (!serie) return fail(400, { error: 'Give the series a name.' });
+		return { serieCreada: serie.id };
+	},
+
+	/**
+	 * Nombre, descripción y videos de una serie. Cada video marcado lleva su número de parte;
+	 * los que no lo tienen van al final, en el orden de la lista.
+	 */
+	guardarSerie: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const formulario = await request.formData();
+		const id = String(formulario.get('id') ?? '');
+		const { db } = obtenerServicios();
+		const nombre = String(formulario.get('nombre') ?? '');
+		if (!editarSerie(db, id, nombre, String(formulario.get('descripcion') ?? ''))) {
+			return fail(400, { error: 'Give the series a name.' });
+		}
+		const marcados = formulario.getAll('video').map(String);
+		const parte = (videoId: string) => {
+			const n = Number(formulario.get(`parte-${videoId}`));
+			return Number.isFinite(n) && n > 0 ? n : Number.MAX_SAFE_INTEGER;
+		};
+		const ordenados = marcados
+			.map((v, i) => ({ v, i, p: parte(v) }))
+			.sort((a, b) => a.p - b.p || a.i - b.i)
+			.map((x) => x.v);
+		asignarVideos(db, id, ordenados);
+		return { serieGuardada: id };
+	},
+
+	borrarSerie: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const id = String((await request.formData()).get('id') ?? '');
+		borrarSerie(obtenerServicios().db, id);
+		return { serieBorrada: id };
+	},
+
+	/** Pide a Muse Spark el resumen de la serie; queda pendiente en la cola de revisión. */
+	resumirSerie: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const id = String((await request.formData()).get('id') ?? '');
+		const { db, meta, topeAlcanzado } = obtenerServicios();
+		if (topeAlcanzado()) return fail(429, { error: 'The daily spending cap was reached.' });
+		try {
+			const resumen = await proponerResumenSerie(db, meta, id);
+			if (resumen === null) {
+				return fail(409, {
+					error: 'Approve the summary of at least one video of the series first.'
+				});
+			}
+		} catch (error) {
+			console.error('Falló el resumen de la serie', error);
+			return fail(502, { error: 'Muse Spark did not answer. Try again in a moment.' });
+		}
+		return { serieResumida: id };
+	},
+
+	decidirResumenSerie: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const formulario = await request.formData();
+		const id = Number(formulario.get('id'));
+		const decision = formulario.get('decision');
+		if (!Number.isInteger(id) || (decision !== 'aprobado' && decision !== 'oculto')) {
+			return fail(400, { error: 'Unknown decision.' });
+		}
+		if (!decidirResumenSerie(obtenerServicios().db, id, decision, 'admin')) {
+			return fail(409, { error: 'Someone already decided on this item.' });
+		}
+		return { decidido: id };
+	},
+
+	/** Fusiona dos etiquetas equivalentes: la primera pasa a la segunda. */
+	fusionarEtiquetas: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const formulario = await request.formData();
+		const absorbida = Number(formulario.get('absorbida'));
+		const destino = Number(formulario.get('destino'));
+		if (!fusionarEtiquetas(obtenerServicios().db, absorbida, destino)) {
+			return fail(400, { error: 'Choose two different topics.' });
+		}
+		return { fusionadas: destino };
 	},
 
 	/** Retira una investigación publicada por un visitante (spec investigaciones: límites). */

@@ -45,8 +45,13 @@
 	{:else if data.total === 0 && data.enPantalla.length === 0}
 		<h1>Nothing found for “{data.consulta}”</h1>
 		<p class="nota">
-			No transcript contains those words. Try a single word, another form of it, or a shorter
-			phrase.
+			{#if data.etiqueta}
+				No video on <span lang="es">“{data.etiqueta.nombre}”</span> contains those words. Try all topics,
+				a single word, or another form of it.
+			{:else}
+				No transcript contains those words. Try a single word, another form of it, or a shorter
+				phrase.
+			{/if}
 		</p>
 	{:else}
 		<header class="encabezado">
@@ -79,7 +84,31 @@
 				</div>
 			{/if}
 		</header>
+	{/if}
 
+	{#if data.consulta && (data.etiquetas.length || data.etiqueta)}
+		<!-- Filtro por tema: un GET, para que funcione sin JS y se pueda compartir. Se aplica con el
+		     botón, no al cambiar la lista (WCAG 3.2.2). -->
+		<form class="por-tema" method="get" action={resolve('/search')}>
+			<input type="hidden" name="q" value={data.consulta} />
+			<label for="tema">Topic</label>
+			<select id="tema" name="tag">
+				<option value="" selected={!data.etiqueta}>All topics</option>
+				{#each data.etiquetas as e (e.slug)}
+					<option value={e.slug} lang="es" selected={data.etiqueta?.slug === e.slug}
+						>{e.nombre}</option
+					>
+				{/each}
+			</select>
+			<button type="submit" class="boton secundario">Filter</button>
+			<a href={resolve('/topics')}>All topics</a>
+		</form>
+		{#if data.etiquetaDesconocida}
+			<p class="error" role="alert">That topic does not exist any more; showing every video.</p>
+		{/if}
+	{/if}
+
+	{#if data.consulta && (data.total > 0 || data.enPantalla.length > 0)}
 		{#each grupos as grupo (grupo.videoId)}
 			<section class="grupo tarjeta" aria-labelledby="g-{grupo.videoId}">
 				<header class="cabeza">
@@ -151,6 +180,27 @@
 </div>
 
 <style>
+	.por-tema {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--e-2) var(--e-3);
+		font-family: var(--letra-interfaz);
+	}
+
+	.por-tema select {
+		min-height: 2.75rem;
+		max-width: 100%;
+	}
+
+	.error {
+		font-family: var(--letra-interfaz);
+	}
+
+	.error::before {
+		content: '⚠ ';
+	}
+
 	.pagina {
 		max-width: 64rem;
 		margin: 0 auto;

@@ -30,6 +30,8 @@ export interface ResultadoAgente {
 	busquedas: string[];
 	/** Idioma de la pregunta (ISO 639-1), según la redacción. Las citas siguen en el original. */
 	idioma?: string;
+	/** Serie a la que se acotó la pregunta, si se acotó. */
+	serie?: { id: string; nombre: string };
 }
 
 export type { PasoAgente };
@@ -40,6 +42,11 @@ export interface OpcionesAgente {
 	maximoTokens?: number;
 	/** Recibe cada paso real en cuanto ocurre (interfaz-con-volumen D2), para dibujarlo en vivo. */
 	alPaso?: (paso: PasoAgente) => void;
+	/**
+	 * Videos a los que se acota la pregunta (una serie, design.md D9). Las herramientas solo ven
+	 * esos videos y la verificación rechaza cualquier cita de otro.
+	 */
+	ambito?: string[];
 }
 
 /** La lengua de las prédicas de la colección: lo que no esté en ella se traduce. */
@@ -110,6 +117,7 @@ export async function preguntar(
 	const maximoPasos = opciones.maximoPasos ?? 8;
 	const maximoTokens = opciones.maximoTokens ?? 150_000;
 	const alPaso = opciones.alPaso ?? (() => {});
+	const ambito = opciones.ambito ? new Set(opciones.ambito) : undefined;
 	const evidencia = new Map<number, FragmentoEvidencia>();
 	const busquedas: string[] = [];
 	const mensajes: MensajeChat[] = [
@@ -139,7 +147,13 @@ export async function preguntar(
 				// Argumentos mal formados: la herramienta responde con lo que pueda.
 			}
 			if (llamada.function.name === 'buscar') busquedas.push(String(argumentos.consulta ?? ''));
-			const contenido = ejecutarHerramienta(db, llamada.function.name, argumentos, evidencia);
+			const contenido = ejecutarHerramienta(
+				db,
+				llamada.function.name,
+				argumentos,
+				evidencia,
+				ambito
+			);
 			mensajes.push({ role: 'tool', tool_call_id: llamada.id, content: contenido });
 			alPaso({
 				tipo: 'herramienta',
@@ -172,7 +186,9 @@ export async function preguntar(
 	);
 
 	const propuesta = leerRespuesta(final.choices[0]?.message.content ?? '');
-	const afirmaciones = verificarAfirmaciones(db, propuesta.afirmaciones);
+	const afirmaciones = ambito
+		? fueraDeAmbito(verificarAfirmaciones(db, propuesta.afirmaciones), ambito)
+		: verificarAfirmaciones(db, propuesta.afirmaciones);
 	const citas = afirmaciones.flatMap((a) => a.citas);
 
 	// Solo las citas verificadas se traducen, y la traducción es ayuda: si falla, la respuesta sigue.
@@ -210,6 +226,22 @@ export async function preguntar(
 		pasos,
 		busquedas
 	};
+}
+
+/**
+ * Una cita verificada de un video fuera del ámbito se rechaza: es literal, pero no responde a
+ * la pregunta que se hizo dentro de la serie. La afirmación que se queda sin citas válidas
+ * pierde el respaldo.
+ */
+export function fueraDeAmbito(
+	afirmaciones: AfirmacionVerificada[],
+	ambito: ReadonlySet<string>
+): AfirmacionVerificada[] {
+	return afirmaciones.map((a) => {
+		const citas = a.citas.filter((c) => c.estado !== 'verificada' || ambito.has(c.videoId));
+		const respaldada = citas.some((c) => c.estado === 'verificada');
+		return { ...a, citas, respaldo: respaldada ? a.respaldo : 'sin_respaldo' };
+	});
 }
 
 /** Cuántos elementos devolvió una herramienta: una lista cuenta sus filas; un aviso, cero. */

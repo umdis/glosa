@@ -139,6 +139,14 @@
 		>
 		<a
 			class="chip"
+			href={resolve('/series')}
+			aria-current={page.url.pathname.startsWith('/series') ||
+			page.url.pathname.startsWith('/topics')
+				? 'page'
+				: undefined}>Series<span class="resto"> &amp; topics</span></a
+		>
+		<a
+			class="chip"
 			href={resolve('/investigations')}
 			aria-current={page.url.pathname.startsWith('/investigations') ? 'page' : undefined}
 			>Investigations{#if data.misInvestigaciones.length}<span class="cuenta"
@@ -303,10 +311,15 @@
 			flex-wrap: nowrap;
 			margin-left: 0;
 		}
+		nav {
+			gap: var(--e-1);
+		}
+		/* Cuatro secciones en 358 px: letra un punto menor y menos relleno; 24 px de alto siguen. */
 		nav .chip {
 			flex: 1 1 auto;
 			justify-content: center;
-			padding-inline: 0.5rem;
+			padding-inline: 0.35rem;
+			font-size: var(--t-0);
 		}
 		.resto {
 			position: absolute;

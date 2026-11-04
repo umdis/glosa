@@ -1,7 +1,12 @@
 import type { Base } from '../db/base';
 import { normalizar } from '../texto/normalizar';
 import { verificarAfirmaciones } from '../verificacion/verificar';
-import type { ResultadoAgente } from './agente';
+import { fueraDeAmbito, type ResultadoAgente } from './agente';
+
+/** La misma pregunta dentro de una serie y fuera de ella son respuestas distintas. */
+export function claveRespuesta(pregunta: string, serieId?: string): string {
+	return normalizar(pregunta) + (serieId ? ` @serie:${serieId}` : '');
+}
 
 /**
  * Límite de preguntas por visitante (design.md D10): ventana deslizante en memoria. Un reinicio
@@ -30,13 +35,13 @@ export function crearLimitador(maximo: number, ventanaMs: number, ahora = () => 
 }
 
 /** Guarda la última respuesta con evidencia verificada de cada pregunta. */
-export function guardarRespuesta(db: Base, resultado: ResultadoAgente): void {
+export function guardarRespuesta(db: Base, resultado: ResultadoAgente, serieId?: string): void {
 	const tieneRespaldo = resultado.afirmaciones.some((a) => a.respaldo === 'respaldada');
 	if (!tieneRespaldo) return;
 	db.prepare(
 		`INSERT INTO respuestas_guardadas (pregunta_norma, resultado) VALUES (?, ?)
 		 ON CONFLICT (pregunta_norma) DO UPDATE SET resultado = excluded.resultado, guardada_en = datetime('now')`
-	).run(normalizar(resultado.pregunta), JSON.stringify(resultado));
+	).run(claveRespuesta(resultado.pregunta, serieId), JSON.stringify(resultado));
 }
 
 /**
@@ -44,18 +49,26 @@ export function guardarRespuesta(db: Base, resultado: ResultadoAgente): void {
  * Sus citas se vuelven a verificar contra la base actual: si un fragmento citado se ocultó
  * después, esa cita cae, y la afirmación que se queda sin respaldo no se muestra.
  */
-export function respuestaGuardada(db: Base, pregunta: string): ResultadoAgente | null {
+export function respuestaGuardada(
+	db: Base,
+	pregunta: string,
+	serie?: { id: string; videos: string[] }
+): ResultadoAgente | null {
 	const fila = db
 		.prepare(`SELECT resultado FROM respuestas_guardadas WHERE pregunta_norma = ?`)
-		.get(normalizar(pregunta)) as { resultado: string } | undefined;
+		.get(claveRespuesta(pregunta, serie?.id)) as { resultado: string } | undefined;
 	if (!fila) return null;
 	const guardado = JSON.parse(fila.resultado) as ResultadoAgente;
-	const reverificadas = verificarAfirmaciones(
+	const verificadas = verificarAfirmaciones(
 		db,
 		guardado.afirmaciones.map((a) => ({
 			texto: a.texto,
 			citas: a.citas.map((c) => ({ fragmentoId: c.fragmentoId, frase: c.frase }))
 		}))
+	);
+	// Si la serie perdió un video desde entonces, sus citas tampoco valen ya.
+	const reverificadas = (
+		serie ? fueraDeAmbito(verificadas, new Set(serie.videos)) : verificadas
 	).filter((a) => a.respaldo === 'respaldada');
 	if (reverificadas.length === 0) return null;
 	return { ...guardado, afirmaciones: reverificadas };
