@@ -304,7 +304,15 @@ export const migraciones: Migracion[] = [
 			}
 			if (Array.isArray(temas)) etiquetarVideo(db, fila.video_id, temas.map(String));
 		}
-	}
+	},
+
+	/*
+	 * 7 — privacidad visual por video (spec privacidad-visual; design.md D11). Activa: fotogramas
+	 * difuminados con SAM 3.1 y clips sin imagen.
+	 */ `
+	ALTER TABLE videos ADD COLUMN privacidad_visual INTEGER NOT NULL DEFAULT 0
+		CHECK (privacidad_visual IN (0, 1));
+	`
 ];
 
 /** Convierte un tema en slug: sin tildes ni mayúsculas, palabras unidas por guiones. */

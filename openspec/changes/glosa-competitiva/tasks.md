@@ -52,14 +52,14 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 - [x] 5.3 Ámbito de serie en las herramientas del agente y rechazo de citas fuera de ámbito, con pruebas — `/ask?serie=`; la respuesta guardada se indexa por serie y se vuelve a filtrar si la serie pierde un video
 - [x] 5.4 Resumen compilado de serie como pendiente en la cola de revisión — **desviación de D9:** tabla propia `series_resumenes` en vez de `pendientes` (esa exige `video_id` y un CHECK de tipo; rehacerla con datos de producción no compensaba). Sale en la misma cola de `/admin`
 - [x] 5.5 Página `/topics` (y `/topics/[slug]`), filtro por etiqueta en la búsqueda (`?tag=`, GET con botón) y fusión de etiquetas en `/admin` — verificado en la demo: 251 pruebas, axe 0 en 8 pantallas × 2 temas, sin desborde a 390 px (se arregló de paso el que ya tenía `/admin`)
-- [ ] 5.6 Despliegue y verificación
+- [x] 5.6 Despliegue y verificación — `d16799a` desplegado el 4-nov tras el respaldo `respaldo-20261104-1303.db`; rutas nuevas 200 y axe 0 en producción. En producción no hay etiquetas ni series hasta que el editor apruebe fichas y cree series
 
 ## 6. Privacidad visual con SAM 3.1 (2-nov)
 
-- [ ] 6.1 Reconocimiento de la API de SAM 3.1 con un fotograma real (máscaras, formato, coste, latencia)
-- [ ] 6.2 `Difuminador`: elección del orador y composición con ffmpeg; respaldo al minuto si falla, con pruebas
-- [ ] 6.3 Fotogramas y láminas difuminados con caché; interruptor por video en `/admin` con vista antes/después
-- [ ] 6.4 Clips: máscaras cada 0,5 s o, si no da el tiempo/coste, clip sin imagen para videos con privacidad
+- [x] 6.1 Reconocimiento de la API de SAM 3.1 con un fotograma real (máscaras, formato, coste, latencia) — `POST /v1/responses`, `input_text` «person» + `input_image` en data URL, sin streaming; salida en `output_text`: `<0f>id<|box;x1;y1;x2;y2;w;h;c|><|mask;…;data=H,W,!base85|>`. `usage.images_processed` (0,0002 USD). 1,1–1,9 s por cuadro de 640 px. Escena sintética de Muse Image (nadie real): 21 personas, confianza 0,82–0,93
+- [x] 6.2 `Difuminador`: elección del orador y composición con ffmpeg; respaldo al minuto si falla, con pruebas — **desviaciones de D11:** se difumina la *caja* con margen del 8 % (la máscara viene en un base85 sin decodificador publicado); el orador no es la caja más grande (en un plano desde el fondo lo es el público del primer plano) sino, entre las centradas, la que empieza más arriba; sin nadie centrado se difumina a todos
+- [x] 6.3 Fotogramas y láminas difuminados con caché; interruptor por video en `/admin` con vista antes/después — caché en `medios/<video>/difuminados/`; si SAM falla o hay tope, 404 y la interfaz muestra el minuto. Las láminas no usan fotogramas (son ilustraciones), no aplica. Los fotogramas dejan de ser `immutable` (max-age 600) para que activar la privacidad no deje el original en cachés. El video completo sigue reproduciéndose tal cual, y `/admin` lo dice
+- [x] 6.4 Clips: máscaras cada 0,5 s o, si no da el tiempo/coste, clip sin imagen para videos con privacidad — sin imagen (80 llamadas por clip no compensan); verificado mirando un cuadro del clip generado
 - [ ] 6.5 Despliegue y verificación visual
 
 ## 7. WhatsApp (2-nov / 3-nov)

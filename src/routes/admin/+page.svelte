@@ -349,6 +349,63 @@
 											</form>
 										{/if}
 										{#if v.estado === 'listo'}
+											<div class="privacidad">
+												<p class="detalle" role="status">
+													Visual privacy: {v.privacidadVisual
+														? 'on. Frames show the audience blurred by SAM 3.1 and clips have no picture.'
+														: 'off. Frames and clips show the video as recorded.'}
+												</p>
+												<form method="post" action="?/privacidad" use:enhance>
+													<input type="hidden" name="videoId" value={v.id} />
+													<input
+														type="hidden"
+														name="activa"
+														value={v.privacidadVisual ? '0' : '1'}
+													/>
+													<button type="submit" class="secundario"
+														>{v.privacidadVisual ? 'Turn off' : 'Turn on'} visual privacy<span
+															class="solo-lector"
+														>
+															for {v.titulo}</span
+														></button
+													>
+												</form>
+												<details>
+													<summary>Preview the blur on one frame</summary>
+													<p class="detalle">
+														The same frame, as recorded and with everyone except the speaker
+														blurred. The full video still plays as recorded.
+													</p>
+													<div class="antes-despues">
+														<figure>
+															<img
+																src="{resolve('/admin/fotograma/[id]/[segundo]', {
+																	id: v.id,
+																	segundo: String(v.posterSegundo)
+																})}?version=original"
+																alt="Frame at {folio(v.posterSegundo * 1000)}, as recorded"
+																loading="lazy"
+																width="640"
+																height="360"
+															/>
+															<figcaption>As recorded</figcaption>
+														</figure>
+														<figure>
+															<img
+																src="{resolve('/admin/fotograma/[id]/[segundo]', {
+																	id: v.id,
+																	segundo: String(v.posterSegundo)
+																})}?version=difuminado"
+																alt="The same frame with everyone except the speaker blurred"
+																loading="lazy"
+																width="640"
+																height="360"
+															/>
+															<figcaption>With visual privacy</figcaption>
+														</figure>
+													</div>
+												</details>
+											</div>
 											{@const s = v.subtitulosEn}
 											<form class="subtitulos" method="post" action="?/subtitular" use:enhance>
 												<input type="hidden" name="videoId" value={v.id} />
@@ -515,6 +572,30 @@
 </div>
 
 <style>
+	.antes-despues {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+		gap: var(--e-3);
+		margin: var(--e-2) 0 0;
+	}
+
+	.antes-despues img {
+		width: 100%;
+		height: auto;
+		border-radius: var(--radio-s, 0.25rem);
+		background: var(--papel);
+	}
+
+	.antes-despues figcaption {
+		color: var(--suave);
+		font-size: var(--t-0);
+	}
+
+	.privacidad details summary {
+		cursor: pointer;
+		min-height: 1.5rem;
+	}
+
 	.series,
 	.temas {
 		display: grid;

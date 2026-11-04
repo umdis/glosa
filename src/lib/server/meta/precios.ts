@@ -16,6 +16,9 @@ const POR_MILLON: Record<string, PrecioTokens> = {
 
 const TRANSCRIPCION_USD_POR_HORA = 0.18;
 
+/** SAM 3.1: 0,20 USD por 1.000 fotogramas (dev.meta.ai, 2026-10-27). */
+export const COSTO_SAM_FOTOGRAMA_USD = 0.0002;
+
 /** Muse Image: precio por imagen generada. */
 export const COSTO_IMAGEN_USD = 0.01;
 

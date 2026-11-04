@@ -6,6 +6,7 @@ import { segundoPoster } from '#lib/server/fotogramas.js';
 import { listarPublicadas, retirar } from '#lib/server/investigaciones/datos.js';
 import { decidir, listarPendientes, type Decision } from '#lib/server/revision/decisiones.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import { fijarPrivacidadVisual } from '#lib/server/videos.js';
 import { fusionarEtiquetas, todasLasEtiquetas } from '#lib/server/series/etiquetas.js';
 import {
 	asignarVideos,
@@ -30,6 +31,7 @@ interface FilaVideo {
 	titulo: string;
 	estado: 'procesando' | 'listo' | 'con_errores';
 	duracionMs: number | null;
+	privacidadVisual: number;
 }
 
 export const load: PageServerLoad = ({ request, cookies }) => {
@@ -39,7 +41,8 @@ export const load: PageServerLoad = ({ request, cookies }) => {
 	const { db, topeAlcanzado } = obtenerServicios();
 	const videos = db
 		.prepare(
-			`SELECT id, titulo, estado, duracion_ms AS duracionMs FROM videos ORDER BY creado_en DESC`
+			`SELECT id, titulo, estado, duracion_ms AS duracionMs, privacidad_visual AS privacidadVisual
+			 FROM videos ORDER BY creado_en DESC`
 		)
 		.all() as FilaVideo[];
 	const pasos = db
@@ -140,6 +143,18 @@ export const actions: Actions = {
 		if (topeAlcanzado()) return fail(429, { error: 'The daily spending cap was reached.' });
 		subtitular(db, meta, videoId, 'en');
 		return { subtitulando: videoId };
+	},
+
+	/** Activa o apaga la privacidad visual de un video (spec privacidad-visual). */
+	privacidad: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const formulario = await request.formData();
+		const videoId = String(formulario.get('videoId') ?? '');
+		const activa = formulario.get('activa') === '1';
+		if (!fijarPrivacidadVisual(obtenerServicios().db, videoId, activa)) {
+			return fail(404, { error: 'That video does not exist.' });
+		}
+		return { privacidad: videoId };
 	},
 
 	/** Crea una serie (spec series-y-etiquetas). */

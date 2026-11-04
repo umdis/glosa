@@ -56,6 +56,14 @@ describe('pedidoClip', () => {
 		expect(p.archivo).toBe(`${ids[1]}-10000-40000-v.mp4`);
 		expect(pedidoClip(db, ids[1], false)!.archivo).toBe(`${ids[1]}-10000-40000-c.mp4`);
 
+		// Privacidad visual: el clip sale sin imagen aunque los fotogramas estén encendidos.
+		db.prepare(`UPDATE videos SET privacidad_visual = 1`).run();
+		const privado = pedidoClip(db, ids[1], true)!;
+		expect(privado.conImagen).toBe(false);
+		expect(privado.archivo).toBe(`${ids[1]}-10000-40000-c.mp4`);
+		db.prepare(`UPDATE videos SET privacidad_visual = 0`).run();
+		expect(pedidoClip(db, ids[1], true)!.conImagen).toBe(true);
+
 		// Ocultar lo que seguía cambia la ventana y, con ella, el archivo: el viejo no se sirve.
 		db.prepare(`UPDATE fragmentos SET visibilidad = 'oculto' WHERE id = ?`).run(ids[3]);
 		expect(pedidoClip(db, ids[1], true)!.archivo).toBe(`${ids[1]}-0-30000-v.mp4`);

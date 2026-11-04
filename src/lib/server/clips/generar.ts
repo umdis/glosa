@@ -121,6 +121,8 @@ export interface ClipPedido {
 	ventana: VentanaClip;
 	/** Nombre del archivo en caché: cambia si cambia la ventana o si hay imagen o no. */
 	archivo: string;
+	/** Con la imagen del video; sin ella, fondo liso (SHOW_FRAMES apagado o privacidad visual). */
+	conImagen: boolean;
 }
 
 /**
@@ -130,18 +132,23 @@ export interface ClipPedido {
 export function pedidoClip(db: Base, fragmentoId: number, conImagen: boolean): ClipPedido | null {
 	const fila = db
 		.prepare(
-			`SELECT f.video_id, v.titulo FROM fragmentos f JOIN videos v ON v.id = f.video_id
+			`SELECT f.video_id, v.titulo, v.privacidad_visual FROM fragmentos f JOIN videos v ON v.id = f.video_id
 			 WHERE f.id = ? AND f.visibilidad = 'visible' AND v.archivo_reproduccion IS NOT NULL`
 		)
-		.get(fragmentoId) as { video_id: string; titulo: string } | undefined;
+		.get(fragmentoId) as
+		{ video_id: string; titulo: string; privacidad_visual: number } | undefined;
 	if (!fila) return null;
+	// Privacidad visual (design.md D11, tarea 6.4): difuminar cada 0,5 s de un clip costaría
+	// 80 llamadas a SAM por clip; el clip de un video con privacidad sale sin imagen.
+	const imagen = conImagen && fila.privacidad_visual !== 1;
 	const ventana = calcularVentana(fragmentosDelVideo(db, fila.video_id), fragmentoId);
 	if (!ventana) return null;
 	return {
 		videoId: fila.video_id,
 		titulo: fila.titulo,
 		ventana,
-		archivo: `${fragmentoId}-${ventana.inicioMs}-${ventana.finMs}-${conImagen ? 'v' : 'c'}.mp4`
+		archivo: `${fragmentoId}-${ventana.inicioMs}-${ventana.finMs}-${imagen ? 'v' : 'c'}.mp4`,
+		conImagen: imagen
 	};
 }
 
@@ -187,7 +194,7 @@ export async function generarClip(deps: DependenciasClip, pedido: ClipPedido): P
 				duracionMs: pedido.ventana.finMs - pedido.ventana.inicioMs,
 				subtitulos,
 				fuentes: deps.fuentes,
-				conImagen: deps.conImagen,
+				conImagen: deps.conImagen && pedido.conImagen,
 				salida: temporal
 			}),
 			{ timeout: 180_000 }

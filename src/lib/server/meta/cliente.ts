@@ -1,9 +1,15 @@
-import { COSTO_IMAGEN_USD, costoTokens, costoTranscripcion } from './precios';
+import {
+	COSTO_IMAGEN_USD,
+	COSTO_SAM_FOTOGRAMA_USD,
+	costoTokens,
+	costoTranscripcion
+} from './precios';
 
 const BASE_URL = 'https://api.meta.ai/v1';
 export const MODELO_RAZONAMIENTO = 'muse-spark-1.3';
 export const MODELO_TRANSCRIPCION = 'muse-voice-transcribe-1.0';
 export const MODELO_IMAGEN = 'muse-image-1.0';
+export const MODELO_SEGMENTACION = 'sam-3.1';
 
 /** Uso de una llamada, listo para guardar en la tabla `gasto`. */
 export interface UsoMedido {
@@ -213,6 +219,53 @@ export class ClienteMeta {
 			costoUsd: COSTO_IMAGEN_USD
 		});
 		return Uint8Array.from(Buffer.from(base64, 'base64'));
+	}
+
+	/**
+	 * Segmenta un concepto («person») en una imagen con SAM 3.1 (Responses API, sin streaming;
+	 * reconocimiento del 2026-11-04). Devuelve el texto de salida con una caja y una máscara por
+	 * instancia; se cobra por fotograma procesado (`usage.images_processed`).
+	 */
+	async segmentar(jpeg: Uint8Array, concepto = 'person'): Promise<string> {
+		const respuesta = await this.solicitar('segmentar', '/responses', () => ({
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				model: MODELO_SEGMENTACION,
+				input: [
+					{
+						type: 'message',
+						role: 'user',
+						content: [
+							{ type: 'input_text', text: concepto },
+							{
+								type: 'input_image',
+								image_url: `data:image/jpeg;base64,${Buffer.from(jpeg).toString('base64')}`
+							}
+						]
+					}
+				],
+				// Las máscaras no se usan (se difumina por caja): la codificación más corta.
+				metadata: { include_confidence: 'true', mask_encoding: 'one_bit' }
+			})
+		}));
+		const datos = (await respuesta.json()) as {
+			output?: Array<{ content?: Array<{ text?: string }> }>;
+			usage?: { images_processed?: number };
+		};
+		this.registroGasto.registrar({
+			modelo: MODELO_SEGMENTACION,
+			operacion: 'segmentar',
+			tokensEntrada: 0,
+			tokensCache: 0,
+			tokensSalida: 0,
+			segundosAudio: 0,
+			costoUsd: COSTO_SAM_FOTOGRAMA_USD * (datos.usage?.images_processed ?? 1)
+		});
+		return (datos.output ?? [])
+			.flatMap((o) => o.content ?? [])
+			.map((c) => c.text ?? '')
+			.join('');
 	}
 
 	/** Sube un archivo a la Files API con caducidad. Devuelve su id. */

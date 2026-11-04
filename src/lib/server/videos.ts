@@ -111,3 +111,17 @@ export function subtitulosVtt(fragmentos: FragmentoPublico[]): string {
 	);
 	return ['WEBVTT', ...bloques].join('\n\n') + '\n';
 }
+
+/** Privacidad visual del video (spec privacidad-visual): fotogramas difuminados y clips sin imagen. */
+export function conPrivacidadVisual(db: Base, videoId: string): boolean {
+	const fila = db.prepare(`SELECT privacidad_visual FROM videos WHERE id = ?`).get(videoId) as
+		{ privacidad_visual: number } | undefined;
+	return fila?.privacidad_visual === 1;
+}
+
+export function fijarPrivacidadVisual(db: Base, videoId: string, activa: boolean): boolean {
+	return (
+		db.prepare(`UPDATE videos SET privacidad_visual = ? WHERE id = ?`).run(activa ? 1 : 0, videoId)
+			.changes > 0
+	);
+}
