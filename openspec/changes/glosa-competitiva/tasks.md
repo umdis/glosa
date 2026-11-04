@@ -71,8 +71,8 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 
 ## 8. YouTube (3-nov)
 
-- [ ] 8.1 Columna `youtube_url`, validación de host y oEmbed al subir o editar, con pruebas
-- [ ] 8.2 «Watch on YouTube» en el video y en las citas con `t=`
+- [x] 8.1 Columna `youtube_url`, validación de host y oEmbed al subir o editar, con pruebas — migración 9 (youtube_url, youtube_canal); validación de host e id antes de cualquier petición; campo opcional al subir que rellena el título solo si está vacío; editable por video en /admin
+- [x] 8.2 «Watch on YouTube» en el video y en las citas con `t=` — en la página del video sigue al reproductor («Watch on YouTube at 12:30») y en cada cita verificada de /ask
 
 ## 9. Cierre
 

@@ -324,6 +324,14 @@ export const migraciones: Migracion[] = [
 		preguntas INTEGER NOT NULL,
 		PRIMARY KEY (remitente, dia)
 	);
+	`,
+
+	/*
+	 * 9 — publicación original en YouTube (spec origen-youtube; design.md D13). Solo el enlace
+	 * canónico y el canal que dio oEmbed; nunca se descarga nada de YouTube.
+	 */ `
+	ALTER TABLE videos ADD COLUMN youtube_url TEXT;
+	ALTER TABLE videos ADD COLUMN youtube_canal TEXT;
 	`
 ];
 

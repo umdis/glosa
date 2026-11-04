@@ -8,6 +8,7 @@
 	import DictarPregunta from '#lib/componentes/DictarPregunta.svelte';
 	import MargenEscriba from '#lib/componentes/MargenEscriba.svelte';
 	import { folio } from '#lib/formato.js';
+	import { youtubeEnMinuto } from '#lib/youtube.js';
 	import { consultaGuardar } from '#lib/investigaciones.js';
 	import { trazaDeRespuesta, type PasoAgente } from '#lib/traza.js';
 	import type { ResultadoAgente } from '#lib/server/agente/agente.js';
@@ -307,6 +308,16 @@
 													data-etiqueta="{cita.titulo}, {folio(cita.inicioMs)}"
 													>Save or share<span class="solo-lector">: «{cita.frase}»</span></a
 												>
+												{#if data.youtube[cita.videoId]}
+													<a
+														class="guardar"
+														href={youtubeEnMinuto(data.youtube[cita.videoId], cita.inicioMs / 1000)}
+														rel="external noopener"
+														>Watch on YouTube<span class="solo-lector">
+															at {folio(cita.inicioMs)}</span
+														></a
+													>
+												{/if}
 											</p>
 										{:else}
 											<p class="fuente">

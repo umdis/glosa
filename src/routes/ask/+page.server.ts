@@ -5,7 +5,7 @@ import { indicePublico } from '#lib/server/biblia/indice.js';
 import { fichaAprobada } from '#lib/server/revision/resumen.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
 import { obtenerSerie } from '#lib/server/series/series.js';
-import { listarVideos } from '#lib/server/videos.js';
+import { enlacesYoutube, listarVideos } from '#lib/server/videos.js';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -27,7 +27,8 @@ export const load: PageServerLoad = ({ url }) => {
 	return {
 		ejemplos: temasUnicos.slice(0, 3).map((t) => `What was said about ${t}?`),
 		serie,
-		serieDesconocida: Boolean(pedida && !encontrada)
+		serieDesconocida: Boolean(pedida && !encontrada),
+		youtube: enlacesYoutube(db)
 	};
 };
 

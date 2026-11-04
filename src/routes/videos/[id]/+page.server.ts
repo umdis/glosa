@@ -4,7 +4,12 @@ import { pasajesDeVideo } from '#lib/server/biblia/indice.js';
 import { segundoPoster } from '#lib/server/fotogramas.js';
 import { fichaAprobada } from '#lib/server/revision/resumen.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
-import { fragmentosVisibles, obtenerVideo, textosEnPantalla } from '#lib/server/videos.js';
+import {
+	enlacesYoutube,
+	fragmentosVisibles,
+	obtenerVideo,
+	textosEnPantalla
+} from '#lib/server/videos.js';
 import { avanceSubtitulos } from '#lib/server/traduccion/subtitulos.js';
 import type { PageServerLoad } from './$types';
 
@@ -59,6 +64,8 @@ export const load: PageServerLoad = ({ params, url }) => {
 		/** Hay al menos una línea traducida al inglés: el reproductor ofrece esa pista. */
 		subtitulosEn: avanceSubtitulos(db, params.id, 'en').traducidas > 0,
 		ficha: fichaAprobada(db, params.id),
+		/** Publicación original en YouTube, si el editor la enlazó. */
+		youtube: enlacesYoutube(db)[params.id] ?? null,
 		posterSegundo: segundoPoster(video.duracionMs),
 		inicioSegundos: Number.isFinite(t) && t > 0 ? Math.floor(t) : 0
 	};

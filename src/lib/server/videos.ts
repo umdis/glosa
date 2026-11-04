@@ -125,3 +125,11 @@ export function fijarPrivacidadVisual(db: Base, videoId: string, activa: boolean
 			.changes > 0
 	);
 }
+
+/** Enlace canónico de YouTube de cada video que lo tenga (spec origen-youtube). */
+export function enlacesYoutube(db: Base): Record<string, string> {
+	const filas = db
+		.prepare(`SELECT id, youtube_url FROM videos WHERE youtube_url IS NOT NULL`)
+		.all() as Array<{ id: string; youtube_url: string }>;
+	return Object.fromEntries(filas.map((f) => [f.id, f.youtube_url]));
+}

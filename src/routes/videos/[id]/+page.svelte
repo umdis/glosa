@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Fotograma from '#lib/componentes/Fotograma.svelte';
 	import { contiene, duracion, folio, resaltar } from '#lib/formato.js';
+	import { youtubeEnMinuto } from '#lib/youtube.js';
 	import { consultaGuardar } from '#lib/investigaciones.js';
 	import { replaceState } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -161,6 +162,13 @@
 		<h1 lang="es">{data.video.titulo}</h1>
 		{#if data.video.duracionMs}<p class="dato">{duracion(data.video.duracionMs)}</p>{/if}
 		{#if data.ficha.resumen}<p class="resumen" lang="es">{data.ficha.resumen}</p>{/if}
+		{#if data.youtube}
+			<p class="dato">
+				<a href={youtubeEnMinuto(data.youtube, tiempoMs / 1000)} rel="external noopener"
+					>Watch on YouTube at {folio(tiempoMs)}</a
+				>
+			</p>
+		{/if}
 		<p class="procedencia">
 			Transcript by Muse Voice Transcribe{#if data.pantalla.length}; slides and whiteboard read by
 				Muse Spark{/if}. Every line links to its moment.

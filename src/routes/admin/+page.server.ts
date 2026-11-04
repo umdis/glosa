@@ -7,6 +7,7 @@ import { listarPublicadas, retirar } from '#lib/server/investigaciones/datos.js'
 import { decidir, listarPendientes, type Decision } from '#lib/server/revision/decisiones.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
 import { fijarPrivacidadVisual } from '#lib/server/videos.js';
+import { consultarYoutube } from '#lib/server/youtube.js';
 import { fusionarEtiquetas, todasLasEtiquetas } from '#lib/server/series/etiquetas.js';
 import {
 	asignarVideos,
@@ -32,6 +33,8 @@ interface FilaVideo {
 	estado: 'procesando' | 'listo' | 'con_errores';
 	duracionMs: number | null;
 	privacidadVisual: number;
+	youtubeUrl: string | null;
+	youtubeCanal: string | null;
 }
 
 export const load: PageServerLoad = ({ request, cookies }) => {
@@ -41,7 +44,8 @@ export const load: PageServerLoad = ({ request, cookies }) => {
 	const { db, topeAlcanzado } = obtenerServicios();
 	const videos = db
 		.prepare(
-			`SELECT id, titulo, estado, duracion_ms AS duracionMs, privacidad_visual AS privacidadVisual
+			`SELECT id, titulo, estado, duracion_ms AS duracionMs, privacidad_visual AS privacidadVisual,
+				youtube_url AS youtubeUrl, youtube_canal AS youtubeCanal
 			 FROM videos ORDER BY creado_en DESC`
 		)
 		.all() as FilaVideo[];
@@ -155,6 +159,35 @@ export const actions: Actions = {
 			return fail(404, { error: 'That video does not exist.' });
 		}
 		return { privacidad: videoId };
+	},
+
+	/**
+	 * Enlaza un video con su publicación en YouTube, o quita el enlace si llega vacío (spec
+	 * origen-youtube). Solo se guarda el enlace canónico y el canal; el título no se toca.
+	 */
+	youtube: async ({ request, cookies }) => {
+		if (!esAdmin(request, ADMIN_TOKEN, cookies)) return fail(401, { error: 'Sign in again.' });
+		const formulario = await request.formData();
+		const videoId = String(formulario.get('videoId') ?? '');
+		const enlace = String(formulario.get('youtube') ?? '').trim();
+		const { db } = obtenerServicios();
+		if (!db.prepare(`SELECT 1 FROM videos WHERE id = ?`).get(videoId)) {
+			return fail(404, { error: 'That video does not exist.' });
+		}
+		if (!enlace) {
+			db.prepare(`UPDATE videos SET youtube_url = NULL, youtube_canal = NULL WHERE id = ?`).run(
+				videoId
+			);
+			return { youtube: videoId };
+		}
+		const consulta = await consultarYoutube(enlace);
+		if (!consulta.ok) return fail(400, { error: consulta.error });
+		db.prepare(`UPDATE videos SET youtube_url = ?, youtube_canal = ? WHERE id = ?`).run(
+			consulta.datos.url,
+			consulta.datos.canal,
+			videoId
+		);
+		return { youtube: videoId };
 	},
 
 	/** Crea una serie (spec series-y-etiquetas). */

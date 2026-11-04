@@ -11,17 +11,24 @@ import { exigirAdmin } from '#lib/server/acceso.js';
 import { ARCHIVO_ORIGINAL, registrarVideo } from '#lib/server/ingesta/pipeline.js';
 import { MedioInvalido, probar } from '#lib/server/medios/ffmpeg.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import { consultarYoutube } from '#lib/server/youtube.js';
+import { enlaceYoutube } from '#lib/youtube.js';
 import type { RequestHandler } from './$types';
 
 /**
  * Sube un video. El archivo va como cuerpo crudo (no multipart) para escribirlo en disco por
- * partes, sin cargarlo entero en memoria. El título va en `?titulo=`.
+ * partes, sin cargarlo entero en memoria. El título va en `?titulo=` y, si hay, el enlace de su
+ * publicación en YouTube en `?youtube=` (spec origen-youtube: solo el enlace; el archivo siempre
+ * lo sube el editor).
  */
 export const POST: RequestHandler = async ({ request, url, cookies }) => {
 	exigirAdmin(request, ADMIN_TOKEN, cookies);
 	const titulo = url.searchParams.get('titulo')?.trim() ?? '';
 	if (!titulo || titulo.length > 200) error(400, 'Falta el título (máx. 200 caracteres)');
 	if (!request.body) error(400, 'Falta el archivo de video');
+	const pedidoYoutube = url.searchParams.get('youtube')?.trim() ?? '';
+	const youtube = pedidoYoutube ? enlaceYoutube(pedidoYoutube) : null;
+	if (pedidoYoutube && !youtube) error(400, 'El enlace no es de YouTube (youtube.com o youtu.be)');
 
 	const { db, rutas, carpetaMedios, encolarProcesamiento } = obtenerServicios();
 	const id = randomUUID();
@@ -45,6 +52,14 @@ export const POST: RequestHandler = async ({ request, url, cookies }) => {
 	}
 
 	registrarVideo(db, id, titulo);
+	if (youtube) {
+		db.prepare(`UPDATE videos SET youtube_url = ? WHERE id = ?`).run(youtube, id);
+		// El canal es un dato de cortesía: si oEmbed no responde, el enlace basta.
+		void consultarYoutube(youtube).then((r) => {
+			if (r.ok)
+				db.prepare(`UPDATE videos SET youtube_canal = ? WHERE id = ?`).run(r.datos.canal, id);
+		});
+	}
 	encolarProcesamiento(id);
 	return json({ id, estado: 'procesando' }, { status: 202 });
 };

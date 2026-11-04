@@ -30,6 +30,34 @@
 	};
 
 	let titulo = $state('');
+	let youtube = $state('');
+	let avisoYoutube = $state('');
+
+	/**
+	 * Al pegar el enlace de YouTube, su título rellena el campo si estaba vacío; si ya había uno,
+	 * no se toca (spec origen-youtube). El enlace se valida en el servidor antes de pedir nada.
+	 */
+	async function consultarYoutube() {
+		avisoYoutube = '';
+		if (!youtube.trim()) return;
+		avisoYoutube = 'Looking it up on YouTube…';
+		try {
+			const r = await fetch(`/api/youtube?url=${encodeURIComponent(youtube.trim())}`);
+			const datos = await r.json();
+			if (!r.ok) {
+				avisoYoutube = datos.error ?? 'YouTube did not answer.';
+				return;
+			}
+			if (!titulo.trim()) {
+				titulo = datos.titulo;
+				avisoYoutube = `Title filled in from YouTube (${datos.canal}). You can edit it.`;
+			} else {
+				avisoYoutube = `Linked to “${datos.titulo}” (${datos.canal}). Your title was kept.`;
+			}
+		} catch {
+			avisoYoutube = 'YouTube did not answer. The link will still be saved.';
+		}
+	}
 	let archivo = $state<FileList>();
 	let selector = $state<HTMLInputElement>();
 	let encima = $state(false);
@@ -55,7 +83,8 @@
 		evento.preventDefault();
 		if (!elegido || !titulo.trim()) return;
 		const peticion = new XMLHttpRequest();
-		peticion.open('POST', `/api/videos?titulo=${encodeURIComponent(titulo.trim())}`);
+		const enlace = youtube.trim() ? `&youtube=${encodeURIComponent(youtube.trim())}` : '';
+		peticion.open('POST', `/api/videos?titulo=${encodeURIComponent(titulo.trim())}${enlace}`);
 		peticion.setRequestHeader('Content-Type', 'application/octet-stream');
 		peticion.upload.onprogress = (e) => {
 			if (e.lengthComputable) progreso = Math.round((e.loaded / e.total) * 100);
@@ -65,6 +94,8 @@
 			if (peticion.status === 202) {
 				mensajeSubida = `Uploaded “${titulo.trim()}”. It is being processed; this page updates when you reload it.`;
 				titulo = '';
+				youtube = '';
+				avisoYoutube = '';
 				void invalidateAll();
 			} else {
 				let detalle = peticion.statusText;
@@ -272,6 +303,21 @@
 						for you to review.
 					</p>
 					<form onsubmit={subir} class="subir">
+						<label for="youtube">YouTube link (optional)</label>
+						<input
+							id="youtube"
+							type="url"
+							inputmode="url"
+							bind:value={youtube}
+							onchange={consultarYoutube}
+							placeholder="https://youtu.be/…"
+							aria-describedby="pista-youtube aviso-youtube"
+						/>
+						<p id="pista-youtube" class="pista">
+							Where this video is published. Glosa only links to it, at the right minute; you still
+							upload the file.
+						</p>
+						<p id="aviso-youtube" class="pista" role="status">{avisoYoutube}</p>
 						<label for="titulo">Title</label>
 						<input id="titulo" type="text" bind:value={titulo} required maxlength="200" />
 						<label for="archivo">Video file (mp4)</label>
@@ -349,6 +395,28 @@
 											</form>
 										{/if}
 										{#if v.estado === 'listo'}
+											<form method="post" action="?/youtube" use:enhance class="youtube">
+												<input type="hidden" name="videoId" value={v.id} />
+												<label for="yt-{v.id}"
+													>YouTube link{#if v.youtubeCanal}<span class="nota">
+															· {v.youtubeCanal}</span
+														>{/if}</label
+												>
+												<div class="fila-youtube">
+													<input
+														id="yt-{v.id}"
+														name="youtube"
+														type="url"
+														value={v.youtubeUrl ?? ''}
+														placeholder="https://youtu.be/…"
+													/>
+													<button type="submit" class="secundario"
+														>Save<span class="solo-lector">
+															the YouTube link of {v.titulo}</span
+														></button
+													>
+												</div>
+											</form>
 											<div class="privacidad">
 												<p class="detalle" role="status">
 													Visual privacy: {v.privacidadVisual
@@ -572,6 +640,24 @@
 </div>
 
 <style>
+	.youtube {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--e-1);
+		margin-top: var(--e-2);
+	}
+
+	.fila-youtube {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--e-2);
+	}
+
+	.fila-youtube input {
+		flex: 1 1 12rem;
+		min-width: 0;
+	}
+
 	.antes-despues {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
