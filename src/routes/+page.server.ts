@@ -8,15 +8,23 @@ import { listarSeries } from '#lib/server/series/series.js';
 import { listarVideos } from '#lib/server/videos.js';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => {
+/** Videos por página en la colección: con cientos de videos, la portada no los pinta todos. */
+const POR_PAGINA = 12;
+
+export const load: PageServerLoad = ({ url }) => {
 	const { db } = obtenerServicios();
 	const videos = listarVideos(db);
+	const paginas = Math.max(1, Math.ceil(videos.length / POR_PAGINA));
+	const pedida = Number.parseInt(url.searchParams.get('pagina') ?? '1', 10);
+	const pagina = Number.isFinite(pedida) ? Math.min(Math.max(pedida, 1), paginas) : 1;
+	const desde = (pagina - 1) * POR_PAGINA;
 	const indice = indicePublico(db);
 	const momentos = indice.flatMap((l) =>
 		l.pasajes.flatMap((p) => p.momentos.map((m) => ({ ...p, ...m })))
 	);
 
-	const coleccion = videos.map((v) => ({
+	// Solo la página pedida lleva póster, temas y pasajes; las cifras del colofón cuentan todos.
+	const coleccion = videos.slice(desde, desde + POR_PAGINA).map((v) => ({
 		...v,
 		posterSegundo: segundoPoster(v.duracionMs),
 		temas: fichaAprobada(db, v.id).temas.slice(0, 3),
@@ -64,6 +72,7 @@ export const load: PageServerLoad = () => {
 
 	return {
 		videos: coleccion,
+		paginacion: { pagina, paginas, total: videos.length, desde: desde + 1 },
 		series: listarSeries(db).map((s) => ({ id: s.id, nombre: s.nombre, videos: s.videos.length })),
 		ejemplos: sugerencias.slice(0, 3).map((s) => `What was said about ${s}?`),
 		cifras: {

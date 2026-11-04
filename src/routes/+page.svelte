@@ -11,6 +11,25 @@
 		resolve(`/videos/[id]?t=${Math.floor(ms / 1000)}`, { id });
 	const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
+	/**
+	 * Paginación de la colección: primera, última, la actual y sus vecinas; el resto se resume
+	 * con «…». Cada enlace es un enlace de verdad (?pagina=N) que sirve sin JavaScript.
+	 */
+	const pag = $derived(data.paginacion);
+	const numeros = $derived.by(() => {
+		const { pagina, paginas } = pag;
+		const visibles = [
+			...new Set([1, pagina - 1, pagina, pagina + 1, paginas].filter((n) => n >= 1 && n <= paginas))
+		].sort((a, b) => a - b);
+		const salida: Array<number | null> = [];
+		visibles.forEach((n, i) => {
+			if (i > 0 && n - visibles[i - 1] > 1) salida.push(null);
+			salida.push(n);
+		});
+		return salida;
+	});
+	const consultaPagina = (n: number) => (n === 1 ? '' : `?pagina=${n}`);
+
 	let pregunta = $state('');
 	/**
 	 * Con JavaScript, «Ask» lleva a /ask con estado de navegación y la pregunta empieza allí, con su
@@ -155,6 +174,11 @@
 				</ul>
 			</div>
 		{/if}
+		{#if pag.paginas > 1}
+			<p class="rango" aria-live="polite">
+				Videos {pag.desde}–{pag.desde + data.videos.length - 1} of {pag.total}
+			</p>
+		{/if}
 		{#if data.videos.length === 0}
 			<p class="vacio">
 				No videos yet. Once a video is uploaded in the editor and transcribed, it appears here.
@@ -192,6 +216,40 @@
 					</li>
 				{/each}
 			</ul>
+			{#if pag.paginas > 1}
+				<nav class="paginacion" aria-label="Pages of the collection">
+					{#if pag.pagina > 1}
+						<a
+							class="chip"
+							href="{resolve('/')}{consultaPagina(pag.pagina - 1)}#t-coleccion"
+							rel="prev">← Previous</a
+						>
+					{/if}
+					<ol>
+						{#each numeros as n, i (n ?? `hueco-${i}`)}
+							<li>
+								{#if n === null}
+									<span class="hueco" aria-hidden="true">…</span>
+								{:else}
+									<a
+										class="chip numero"
+										href="{resolve('/')}{consultaPagina(n)}#t-coleccion"
+										aria-current={n === pag.pagina ? 'page' : undefined}
+										><span class="solo-lector">Page </span>{n}</a
+									>
+								{/if}
+							</li>
+						{/each}
+					</ol>
+					{#if pag.pagina < pag.paginas}
+						<a
+							class="chip"
+							href="{resolve('/')}{consultaPagina(pag.pagina + 1)}#t-coleccion"
+							rel="next">Next →</a
+						>
+					{/if}
+				</nav>
+			{/if}
 		{/if}
 	</section>
 
@@ -569,6 +627,46 @@
 	}
 
 	.dato,
+	.rango {
+		margin: 0 0 var(--e-4);
+		color: var(--suave);
+		font-family: var(--letra-interfaz);
+	}
+
+	.paginacion {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: var(--e-2);
+		margin-top: var(--e-8);
+	}
+
+	.paginacion ol {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--e-1);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.paginacion .numero {
+		justify-content: center;
+		min-width: 2.75rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.paginacion .chip {
+		min-height: 2.75rem;
+	}
+
+	.hueco {
+		padding: 0 var(--e-1);
+		color: var(--suave);
+	}
+
 	.vacio {
 		margin: var(--e-2) 0 0;
 		color: var(--suave);

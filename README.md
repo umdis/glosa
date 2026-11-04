@@ -141,6 +141,17 @@ Or with Docker: `docker build -t glosa .` then
 
 Open `/admin`, sign in with `ADMIN_TOKEN`, and upload a video **you have permission to publish**.
 
+**The editor key is yours to choose.** Glosa ships without one, so nobody can edit a fresh
+install by guessing a default. Generate a long random key, put it in `.env`, and restart:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+# .env → ADMIN_TOKEN=<the value printed above>
+```
+
+The same key works as `Authorization: Bearer <ADMIN_TOKEN>` for scripts. With `ADMIN_TOKEN`
+empty, the editor stays off.
+
 | Variable                      | Purpose                                               |
 | ----------------------------- | ----------------------------------------------------- |
 | `MODEL_API_KEY`               | Meta Model API key (server only)                      |
