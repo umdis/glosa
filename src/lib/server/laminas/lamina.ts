@@ -75,7 +75,13 @@ export function qrPgm(url: string, ladoMaximo = LADO_QR, margenModulos = 2): Uin
 }
 
 /** El texto de la lámina en ASS: la frase en cursiva, su fuente en carmín y el pie con las menciones. */
-export function subtitulosLamina(datos: { frase: string; fuente: string; pie: string }): string {
+export function subtitulosLamina(datos: {
+	frase: string;
+	fuente: string;
+	pie: string;
+	/** Comillas solo si es una cita: un título entre comillas parecería dicho por alguien. */
+	cita?: boolean;
+}): string {
 	const frase = textoAss(datos.frase);
 	// Las frases largas bajan de cuerpo para que quepan sobre la vitela sin tocar el QR.
 	const cuerpo = frase.length > 170 ? 40 : frase.length > 110 ? 46 : frase.length > 60 ? 56 : 72;
@@ -95,7 +101,7 @@ Style: Pie,Alegreya Sans,26,&H00625149,&H00625149,&H00000000,&H00000000,0,0,0,0,
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Dialogue: 0,0:00:00.00,0:00:10.00,Frase,,0,0,0,,«${frase}»
+Dialogue: 0,0:00:00.00,0:00:10.00,Frase,,0,0,0,,${datos.cita === false ? frase : `«${frase}»`}
 Dialogue: 0,0:00:00.00,0:00:10.00,Fuente,,0,0,0,,${textoAss(datos.fuente)}
 Dialogue: 0,0:00:00.00,0:00:10.00,Pie,,0,0,0,,${textoAss(datos.pie)}
 `;
@@ -141,6 +147,10 @@ export interface PedidoLamina {
 	fuente: string;
 	/** Dirección absoluta del minuto en Glosa, para el QR. */
 	enlace: string;
+	/** Pie de la lámina; por defecto, el de una cita verificada. */
+	pie?: string;
+	/** `false` si el texto no es una cita (la portada de una investigación): sin comillas. */
+	cita?: boolean;
 }
 
 export interface DependenciasLamina {
@@ -207,7 +217,10 @@ export async function generarLamina(
 			subtitulosLamina({
 				frase: pedido.frase,
 				fuente: pedido.fuente,
-				pie: 'Verified quote, scan to hear it.  Illustration: Muse Image.  glosa.umdis.site'
+				cita: pedido.cita,
+				pie:
+					pedido.pie ??
+					'Verified quote, scan to hear it.  Illustration: Muse Image.  glosa.umdis.site'
 			})
 		);
 		await ejecutar(deps.ffmpeg, argumentosLamina(rutas), { timeout: 60_000 });

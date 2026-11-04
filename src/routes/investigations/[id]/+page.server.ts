@@ -15,10 +15,16 @@ import {
 import { redactarSeccion } from '#lib/server/investigaciones/redactar.js';
 import { olvidar, recordar, secretoDe } from '#lib/server/investigaciones/sesion.js';
 import { obtenerServicios } from '#lib/server/servicios.js';
+import { ColaLlena, existe } from '#lib/server/clips/generar.js';
+import { pedidoPortada, rutaPortada } from '#lib/server/investigaciones/portada.js';
+import { crearLimitador } from '#lib/server/agente/limites.js';
 import type { Actions, PageServerLoad, RequestEvent } from './$types';
 
-export const load: PageServerLoad = ({ params, url, cookies }) => {
-	const { db, topeAlcanzado } = obtenerServicios();
+/** Portadas nuevas por visitante: tres al día (cada una es una ilustración de Muse Image). */
+const limitePortadas = crearLimitador(3, 24 * 60 * 60_000);
+
+export const load: PageServerLoad = async ({ params, url, cookies }) => {
+	const { db, topeAlcanzado, carpetaLaminas } = obtenerServicios();
 
 	// Abrir el enlace de edición: el secreto pasa a la cookie y sale de la URL (design.md D1).
 	const clave = url.searchParams.get('k');
@@ -37,6 +43,13 @@ export const load: PageServerLoad = ({ params, url, cookies }) => {
 		enlaceEdicion: secreto ? `${url.origin}/investigations/${params.id}?k=${secreto}` : null,
 		enlaceLectura: `${url.origin}/investigations/${params.id}`,
 		nueva: editable && url.searchParams.has('nueva'),
+		// La portada solo existe para una investigación publicada (spec laminas-ilustradas).
+		portada:
+			investigacion.publicada &&
+			!investigacion.retirada &&
+			(await existe(rutaPortada(carpetaLaminas, pedidoPortada(db, investigacion, url.origin))))
+				? `${url.origin}/investigations/${params.id}/portada.png`
+				: null,
 		redaccionDisponible: editable && !topeAlcanzado()
 	};
 };
@@ -126,6 +139,40 @@ export const actions: Actions = {
 				? 'Published. Anyone with the read link can see it.'
 				: 'Unpublished. Only people with the edit link can see it.'
 		};
+	}),
+
+	/**
+	 * Portada ilustrada de una investigación publicada: la lámina con su título y un QR a la
+	 * página de lectura; sirve también de imagen al compartir (spec laminas-ilustradas).
+	 */
+	portada: editar(async ({ id, evento }) => {
+		const { db, lamina, topeAlcanzado, carpetaLaminas } = obtenerServicios();
+		const { investigacion } = accesoA(db, id, evento.cookies);
+		if (!investigacion.publicada || investigacion.retirada) {
+			return fail(409, { error: 'Publish the investigation first: the cover is for sharing it.' });
+		}
+		const pedido = pedidoPortada(db, investigacion, evento.url.origin);
+		if (await existe(rutaPortada(carpetaLaminas, pedido))) {
+			return { aviso: 'The cover is ready.' };
+		}
+		if (topeAlcanzado()) {
+			return fail(429, {
+				error: 'This demo reached its daily AI limit. Covers open again tomorrow.'
+			});
+		}
+		if (!limitePortadas.permitir(evento.getClientAddress())) {
+			return fail(429, { error: 'You made several covers today. Try again tomorrow.' });
+		}
+		try {
+			await lamina(pedido);
+		} catch (e) {
+			if (e instanceof ColaLlena) {
+				return fail(503, { error: 'Glosa is busy making other cards. Try again in a minute.' });
+			}
+			console.error('Falló la portada', e);
+			return fail(500, { error: 'The cover could not be made. Try again in a moment.' });
+		}
+		return { aviso: 'Cover made. It is the image people see when you share the read link.' };
 	}),
 
 	/** Deja de recordar la investigación en este navegador (no la borra). */

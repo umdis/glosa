@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, type SubmitFunction } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { tick } from 'svelte';
 	import { folio } from '#lib/formato.js';
@@ -12,6 +12,16 @@
 		resolve(`/videos/[id]?t=${Math.floor(inicioMs / 1000)}#f-${fragmentoId}`, { id: videoId });
 
 	let redactando = $state(false);
+	let haciendoPortada = $state(false);
+
+	/** La portada tarda ~30 s: el botón lo dice mientras tanto y se vuelve a cargar al terminar. */
+	const conPortada: SubmitFunction = () => {
+		haciendoPortada = true;
+		return async ({ update }) => {
+			await update();
+			haciendoPortada = false;
+		};
+	};
 	let copiado = $state('');
 	let tipoNuevo = $state<'texto' | 'titulo' | 'nota'>('texto');
 
@@ -49,6 +59,12 @@
 		property="og:description"
 		content="A study with verified quotes from video, made with Glosa."
 	/>
+	{#if data.portada}
+		<meta property="og:image" content={data.portada} />
+		<meta property="og:image:width" content="1080" />
+		<meta property="og:image:height" content="1350" />
+		<meta name="twitter:card" content="summary_large_image" />
+	{/if}
 </svelte:head>
 
 <article class="investigacion">
@@ -323,6 +339,29 @@
 						onclick={() => copiar(data.enlaceLectura, 'Read link')}>Copy</button
 					>
 				</div>
+				<div class="portada">
+					{#if data.portada}
+						<img
+							src={data.portada}
+							alt="Cover of this investigation: an illustration, its title and a QR code to the read link"
+							width="1080"
+							height="1350"
+							loading="lazy"
+						/>
+						<p class="nota">This cover is the image people see when you share the read link.</p>
+					{:else}
+						<form method="post" action="?/portada" use:enhance={conPortada}>
+							<p class="nota">
+								Make an illustrated cover for sharing: Muse Image draws an illustration (never
+								people or text), with the title and a QR code to the read link. It takes about half
+								a minute.
+							</p>
+							<button type="submit" class="secundario" disabled={haciendoPortada}
+								>{haciendoPortada ? 'Making the cover…' : 'Make a cover'}</button
+							>
+						</form>
+					{/if}
+				</div>
 			{/if}
 			{#if data.enlaceEdicion}
 				<div class="enlace">
@@ -575,6 +614,19 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--e-2);
+	}
+
+	.portada {
+		display: grid;
+		gap: var(--e-2);
+		max-width: 22rem;
+	}
+
+	.portada img {
+		width: 100%;
+		height: auto;
+		border-radius: var(--radio-m);
+		box-shadow: var(--sombra-1);
 	}
 
 	.publicar {

@@ -42,7 +42,7 @@ verificación desde fuera; si el plazo aprieta, se corta por el final.
 - [x] 4.1 ★ Reconocimiento de la API de Muse Image (formato de petición/respuesta, tamaños, coste real) con una llamada — POST /v1/images/generations (OpenAI), b64_json; WebP 1920×1280 por defecto; size 1024x1536 + output_format png → PNG 1280×1920 en ~25 s; usage en tokens, precio 0,01 USD/imagen.
 - [x] 4.2 ★ Composición (ilustración, frase, fuente, QR, mención) → PNG y prueba de la imagen resultante — con ffmpeg + ASS + Alegreya Sans, como los clips, en vez de resvg: el servidor es ARM y así no entra un binario nativo nuevo. QR con qrcode-generator (MIT, sin dependencias) a tamaño nativo; verificado decodificándolo con jsQR.
 - [x] 4.3 ★ «Make a card» para citas, caché y gasto
-- [ ] 4.4 Portada de investigación publicada y `og:image`
+- [x] 4.4 Portada de investigación publicada y `og:image` — la misma lámina con el título (sin comillas: no es una cita), la cuenta de citas vigentes y un QR a la lectura; solo publicada, 3 por visitante y día; despublicar la oculta (404)
 - [x] 4.5 ★ Despliegue y verificación mirando la lámina generada — en producción en 36 s; QR decodificado con jsQR abre el minuto (200); axe 0
 
 ## 5. Series y etiquetas (1-nov / 2-nov)

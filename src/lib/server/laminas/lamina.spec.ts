@@ -50,6 +50,10 @@ describe('subtitulosLamina', () => {
 		});
 		expect(corta).toContain('«tened (gozo)»');
 		expect(corta).toMatch(/Style: Frase,Alegreya Sans,72,/);
+		// Un título (portada de investigación) no lleva comillas: no lo dijo nadie.
+		const titulo = subtitulosLamina({ frase: 'Criar', fuente: 'f', pie: 'p', cita: false });
+		expect(titulo).toContain(',,Criar\n');
+		expect(titulo).not.toContain('«');
 		const larga = subtitulosLamina({ frase: 'palabra '.repeat(30), fuente: 'f', pie: 'p' });
 		expect(larga).toMatch(/Style: Frase,Alegreya Sans,40,/);
 	});
